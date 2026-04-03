@@ -6,7 +6,6 @@ def clean_claim_lines(raw_text: str) -> list[str]:
 
     for line in raw_text.splitlines():
         line = line.strip()
-
         if not line:
             continue
 

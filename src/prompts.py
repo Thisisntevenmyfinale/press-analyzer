@@ -82,7 +82,7 @@ Why It Matters:
 
 Suggested Newsroom Action:
 <short recommendation>
-    
+
 Article:
 {article}
 """

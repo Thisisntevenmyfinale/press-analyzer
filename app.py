@@ -135,7 +135,6 @@ with hero_right:
 """
     )
 
-
 with st.sidebar:
     st.header("Review setup")
 
@@ -147,6 +146,7 @@ with st.sidebar:
         api_key = st.text_input("OpenAI API Key", type="password")
 
     input_mode = st.radio("Input mode", ["Paste article text", "Article URL"])
+
     st.markdown("---")
     st.markdown("### Output modes")
     st.markdown(
@@ -179,6 +179,7 @@ with left:
             try:
                 article_text = extract_article_from_url(article_url)
                 st.success("Article extracted successfully.")
+                st.caption(f"Extracted length: {len(article_text.split())} words")
                 with st.expander("Preview extracted text"):
                     st.write(article_text[:5000])
             except Exception as e:
@@ -199,7 +200,7 @@ run_analysis = st.button("Run Editorial Audit", use_container_width=True)
 
 if run_analysis:
     if not api_key:
-        st.warning("Please enter your OpenAI API key.")
+        st.warning("Please enter an OpenAI API key or configure Streamlit secrets.")
         st.stop()
 
     if not article_text or len(article_text.strip()) < 250:
