@@ -183,7 +183,7 @@ with left:
                 with st.expander("Preview extracted text"):
                     st.write(article_text[:5000])
             except Exception as e:
-                st.error(f"Could not extract article: {str(e)}")
+                st.error(f"Could not extract article: {e}")
 
 with right:
     st.markdown(
