@@ -161,7 +161,7 @@ def _deduplicate_paragraphs(paragraphs: list[str]) -> list[str]:
 
 
 def _remove_bad_nodes(soup: BeautifulSoup) -> None:
-    for tag in soup([
+    for tag in list(soup.find_all([
         "script",
         "style",
         "noscript",
@@ -172,18 +172,27 @@ def _remove_bad_nodes(soup: BeautifulSoup) -> None:
         "form",
         "button",
         "svg",
-    ]):
+    ])):
         tag.decompose()
 
-    for tag in soup.find_all(True):
-        attrs = " ".join(
-            [
-                tag.get("id", "") or "",
-                " ".join(tag.get("class", [])) if isinstance(tag.get("class", []), list) else "",
-                tag.get("aria-label", "") or "",
-                tag.get("role", "") or "",
-            ]
-        ).lower()
+    for tag in list(soup.find_all(True)):
+        if tag is None:
+            continue
+
+        tag_id = tag.get("id") or ""
+        tag_class = tag.get("class") or []
+        if not isinstance(tag_class, list):
+            tag_class = [str(tag_class)]
+
+        aria_label = tag.get("aria-label") or ""
+        role = tag.get("role") or ""
+
+        attrs = " ".join([
+            tag_id,
+            " ".join(tag_class),
+            aria_label,
+            role,
+        ]).lower()
 
         if any(keyword in attrs for keyword in BAD_ATTR_KEYWORDS):
             tag.decompose()
@@ -192,7 +201,6 @@ def _remove_bad_nodes(soup: BeautifulSoup) -> None:
 def _extract_paragraphs(soup: BeautifulSoup) -> list[str]:
     paragraphs = []
 
-    # 1. Bevorzugt article/main
     preferred_roots = []
     for selector in ["article", "main"]:
         preferred_roots.extend(soup.select(selector))
@@ -208,7 +216,6 @@ def _extract_paragraphs(soup: BeautifulSoup) -> list[str]:
 
     paragraphs = _deduplicate_paragraphs(paragraphs)
 
-    # 2. Falls zu wenig extrahiert wurde, fallback: divs mit längeren Texten
     if len(" ".join(paragraphs).split()) < 180:
         extra = []
         for div in soup.find_all("div"):
