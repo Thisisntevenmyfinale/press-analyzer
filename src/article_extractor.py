@@ -100,6 +100,18 @@ BAD_ATTR_KEYWORDS = [
 ]
 
 
+CONTENT_CLASS_HINTS = [
+    "article",
+    "content",
+    "post",
+    "story",
+    "entry",
+    "body",
+    "main",
+    "text",
+]
+
+
 def _normalize_whitespace(text: str) -> str:
     text = re.sub(r"\s+", " ", text)
     return text.strip()
@@ -120,7 +132,7 @@ def _looks_like_junk(text: str) -> bool:
     if not lowered:
         return True
 
-    if len(lowered) < 45:
+    if len(lowered.split()) < 5:
         return True
 
     if _is_date_or_timestamp(lowered) and len(lowered) < 80:
@@ -160,8 +172,25 @@ def _deduplicate_paragraphs(paragraphs: list[str]) -> list[str]:
     return cleaned
 
 
+def _safe_attr_string(tag) -> str:
+    if not hasattr(tag, "attrs") or tag.attrs is None:
+        return ""
+
+    tag_id = tag.attrs.get("id", "") or ""
+    tag_class = tag.attrs.get("class", []) or []
+    aria_label = tag.attrs.get("aria-label", "") or ""
+    role = tag.attrs.get("role", "") or ""
+
+    if isinstance(tag_class, list):
+        tag_class = " ".join(str(x) for x in tag_class)
+    else:
+        tag_class = str(tag_class)
+
+    return f"{tag_id} {tag_class} {aria_label} {role}".lower().strip()
+
+
 def _remove_bad_nodes(soup: BeautifulSoup) -> None:
-    for tag in list(soup.find_all([
+    for tag in soup([
         "script",
         "style",
         "noscript",
@@ -172,58 +201,81 @@ def _remove_bad_nodes(soup: BeautifulSoup) -> None:
         "form",
         "button",
         "svg",
-    ])):
-        tag.decompose()
+    ]):
+        try:
+            tag.decompose()
+        except Exception:
+            pass
 
-    for tag in list(soup.find_all(True)):
-        if tag is None:
+    tags_to_remove = []
+
+    for tag in soup.find_all(True):
+        attrs = _safe_attr_string(tag)
+        if not attrs:
             continue
 
-        tag_id = tag.get("id") or ""
-        tag_class = tag.get("class") or []
-        if not isinstance(tag_class, list):
-            tag_class = [str(tag_class)]
-
-        aria_label = tag.get("aria-label") or ""
-        role = tag.get("role") or ""
-
-        attrs = " ".join([
-            tag_id,
-            " ".join(tag_class),
-            aria_label,
-            role,
-        ]).lower()
-
         if any(keyword in attrs for keyword in BAD_ATTR_KEYWORDS):
+            tags_to_remove.append(tag)
+
+    for tag in tags_to_remove:
+        try:
             tag.decompose()
+        except Exception:
+            pass
+
+
+def _collect_paragraphs_from_root(root) -> list[str]:
+    paragraphs = []
+
+    for p in root.find_all("p"):
+        text = _normalize_whitespace(p.get_text(" ", strip=True))
+        if _looks_like_junk(text):
+            continue
+        paragraphs.append(text)
+
+    return paragraphs
+
+
+def _candidate_content_divs(soup: BeautifulSoup):
+    def class_matcher(value):
+        if not value:
+            return False
+
+        if isinstance(value, list):
+            joined = " ".join(str(v) for v in value).lower()
+        else:
+            joined = str(value).lower()
+
+        return any(hint in joined for hint in CONTENT_CLASS_HINTS)
+
+    return soup.find_all("div", class_=class_matcher)
 
 
 def _extract_paragraphs(soup: BeautifulSoup) -> list[str]:
     paragraphs = []
 
     preferred_roots = []
-    for selector in ["article", "main"]:
+    for selector in ["article", "main", "[role='main']"]:
         preferred_roots.extend(soup.select(selector))
 
     roots = preferred_roots if preferred_roots else [soup]
 
     for root in roots:
-        for p in root.find_all("p"):
-            text = _normalize_whitespace(p.get_text(" ", strip=True))
-            if _looks_like_junk(text):
-                continue
-            paragraphs.append(text)
+        paragraphs.extend(_collect_paragraphs_from_root(root))
 
     paragraphs = _deduplicate_paragraphs(paragraphs)
 
     if len(" ".join(paragraphs).split()) < 180:
         extra = []
-        for div in soup.find_all("div"):
+
+        for div in _candidate_content_divs(soup):
             text = _normalize_whitespace(div.get_text(" ", strip=True))
+
             if len(text.split()) < 25:
                 continue
             if _looks_like_junk(text):
                 continue
+
             extra.append(text)
 
         paragraphs = _deduplicate_paragraphs(paragraphs + extra)
@@ -231,18 +283,45 @@ def _extract_paragraphs(soup: BeautifulSoup) -> list[str]:
     return paragraphs
 
 
+def _normalize_url(url: str) -> str:
+    url = url.strip()
+    if not url:
+        return url
+
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    return url
+
+
 def extract_article_from_url(url: str) -> str:
+    url = _normalize_url(url)
+
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36"
-        )
+        ),
+        "Accept-Language": "de,en-US;q=0.9,en;q=0.8",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
     }
 
-    response = requests.get(url, headers=headers, timeout=20)
+    response = requests.get(
+        url,
+        headers=headers,
+        timeout=20,
+        allow_redirects=True,
+    )
     response.raise_for_status()
 
+    content_type = response.headers.get("Content-Type", "").lower()
+    if "text/html" not in content_type and "application/xhtml+xml" not in content_type:
+        raise ValueError("URL did not return an HTML page.")
+
     soup = BeautifulSoup(response.text, "lxml")
+
     _remove_bad_nodes(soup)
 
     paragraphs = _extract_paragraphs(soup)
