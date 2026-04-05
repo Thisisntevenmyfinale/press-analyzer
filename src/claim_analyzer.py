@@ -26,11 +26,14 @@ def run_prompt(client: OpenAI, prompt: str, temperature: float = 0.2) -> str:
             {
                 "role": "system",
                 "content": (
-                    "You are a precise editorial analysis assistant. "
-                    "Be structured, grounded, and concise."
+                    "You are a precise editorial analysis assistant for newsroom-quality "
+                    "pre-publication review. Be structured, grounded, concise, and avoid hype."
                 ),
             },
-            {"role": "user", "content": prompt},
+            {
+                "role": "user",
+                "content": prompt,
+            },
         ],
         temperature=temperature,
     )
@@ -46,7 +49,7 @@ def extract_claims(client: OpenAI, article: str) -> list[str]:
 def analyze_claim(client: OpenAI, claim: str, article: str) -> str:
     prompt = CLAIM_ANALYSIS_PROMPT.format(
         claim=claim,
-        article=article[:8000],
+        article=article[:9000],
     )
     return run_prompt(client, prompt, temperature=0.1)
 
@@ -62,13 +65,13 @@ def editorial_decision(client: OpenAI, article: str) -> str:
 
 
 def rewrite_neutral(client: OpenAI, article: str) -> str:
-    prompt = REWRITE_NEUTRAL_PROMPT.format(article=article[:7000])
+    prompt = REWRITE_NEUTRAL_PROMPT.format(article=article[:8000])
     return run_prompt(client, prompt, temperature=0.3)
 
 
 def stakeholder_review(client: OpenAI, article: str) -> str:
     prompt = STAKEHOLDER_REVIEW_PROMPT.format(article=article[:10000])
-    return run_prompt(client, prompt, temperature=0.3)
+    return run_prompt(client, prompt, temperature=0.25)
 
 
 def press_scorecard(client: OpenAI, article: str) -> tuple[str, dict]:
