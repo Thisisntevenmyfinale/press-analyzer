@@ -15,7 +15,13 @@ ATTRIBUTION_PATTERNS = [
     r"\bdata from\b",
     r"\bfigures from\b",
     r"\bsource[d]?\b",
+    r"\blaut\b",
+    r"\bsagte\b",
+    r"\berklärte\b",
+    r"\bberichtete\b",
+    r"\bzufolge\b",
 ]
+
 
 HEDGE_PATTERNS = [
     r"\bmay\b",
@@ -26,7 +32,13 @@ HEDGE_PATTERNS = [
     r"\bappears to\b",
     r"\bseems to\b",
     r"\bsuggests\b",
+    r"\bkönnte\b",
+    r"\bscheint\b",
+    r"\boffenbar\b",
+    r"\bmöglicherweise\b",
+    r"\bsoll\b",
 ]
+
 
 LOADED_WORDS = [
     "outrageous",
@@ -44,7 +56,16 @@ LOADED_WORDS = [
     "dramatic",
     "dangerous",
     "scandal",
+    "urknall",
+    "hochgefährlich",
+    "manisch",
+    "panik",
+    "machtdemonstration",
+    "atemberaubend",
+    "gnadenlos",
+    "beben",
 ]
+
 
 STAKEHOLDER_HINTS = [
     "government",
@@ -66,13 +87,44 @@ STAKEHOLDER_HINTS = [
     "victims",
     "community",
     "spokesperson",
+    "regierung",
+    "ministerium",
+    "unternehmen",
+    "gewerkschaft",
+    "arbeitnehmer",
+    "bürger",
+    "polizei",
+    "gericht",
+    "richter",
+    "experten",
+    "kritiker",
+    "sprecher",
 ]
 
 
+STOPWORD_TITLES = {
+    "The", "A", "An", "This", "That", "These", "Those",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+    "January", "February", "March", "April", "May", "June", "July", "August",
+    "September", "October", "November", "December",
+    "Der", "Die", "Das", "Ein", "Eine", "Einer", "Einem", "Einen",
+    "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag",
+    "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August",
+    "September", "Oktober", "November", "Dezember",
+}
+
+
+COMMON_NON_SOURCE_WORDS = {
+    "Wall Street", "Silicon Valley", "Nahen Osten", "US Börse", "US Börsengängen",
+    "Ersten Quartals", "Global Head", "Equity Capital", "Markets", "Europa",
+    "OpenAI", "Anthropic", "SpaceX", "Goldman Sachs", "Barclays", "BNP Paribas",
+}
+
+
 def count_quotes(text: str) -> int:
-    double_quotes = text.count('"') // 2
-    curly_quotes = min(text.count("“"), text.count("”"))
-    return double_quotes + curly_quotes
+    straight = text.count('"') // 2
+    curly = min(text.count("“"), text.count("”")) + min(text.count("„"), text.count("“"))
+    return straight + curly
 
 
 def count_attributions(text: str) -> int:
@@ -99,27 +151,66 @@ def count_hedges(text: str) -> int:
 
 
 def extract_named_source_candidates(text: str) -> list[str]:
-    candidates = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b", text)
+    candidates = []
+
+    patterns = [
+        r"(?:according to|said|stated|reported|announced|claimed|told)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})",
+        r"(?:laut|sagte|erklärte|berichtete|zufolge)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+){0,2})",
+        r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\s+(?:said|stated|reported|announced|claimed|told)\b",
+        r"\b([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+){1,2})\s+(?:sagte|erklärte|berichtete)\b",
+    ]
+
+    for pattern in patterns:
+        matches = re.findall(pattern, text)
+        for match in matches:
+            if isinstance(match, tuple):
+                name = " ".join(part for part in match if part).strip()
+            else:
+                name = str(match).strip()
+
+            if not name:
+                continue
+
+            first = name.split()[0]
+            if first in STOPWORD_TITLES:
+                continue
+
+            if name in COMMON_NON_SOURCE_WORDS:
+                continue
+
+            if len(name.split()) == 1 and len(name) < 4:
+                continue
+
+            candidates.append(name)
+
+    fallback = re.findall(r"\b([A-Z][a-z]+ [A-Z][a-z]+)\b", text)
+    for name in fallback:
+        if name in COMMON_NON_SOURCE_WORDS:
+            continue
+        first = name.split()[0]
+        if first in STOPWORD_TITLES:
+            continue
+        candidates.append(name)
+
     cleaned = []
-    blacklist = {
-        "The", "A", "An", "This", "That", "These", "Those",
-        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-        "Saturday", "Sunday", "January", "February", "March", "April",
-        "May", "June", "July", "August", "September", "October",
-        "November", "December"
-    }
-    for c in candidates:
-        first = c.split()[0]
-        if first not in blacklist and len(c) > 2:
-            cleaned.append(c)
+    for name in candidates:
+        if any(char.isdigit() for char in name):
+            continue
+        cleaned.append(name)
+
     return cleaned
 
 
 def count_distinct_named_sources(text: str) -> int:
     candidates = extract_named_source_candidates(text)
     counts = Counter(candidates)
-    distinct = [k for k, v in counts.items() if v >= 1]
-    return len(distinct)
+
+    distinct = []
+    for candidate, freq in counts.items():
+        if len(candidate.split()) >= 2 and freq >= 1:
+            distinct.append(candidate)
+
+    return len(set(distinct))
 
 
 def count_stakeholder_hints(text: str) -> int:
