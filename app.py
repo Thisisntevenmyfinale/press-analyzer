@@ -1234,10 +1234,10 @@ def quality_label(avg: Optional[float]) -> str:
 
 def score_color(score: int) -> str:
     if score >= 75:
-        return "🟢"
+        return ""
     if score >= 55:
-        return "🟠"
-    return "🔴"
+        return ""
+    return ""
 
 
 def verdict_class_name(status: str) -> str:
@@ -1481,43 +1481,43 @@ def evidence_signal_rows(indicators: dict) -> list[dict]:
             "name": "Direct quotes",
             "value": indicators.get("quotes", 0),
             "desc": "Quoted statements inside the article",
-            "icon": "🟢" if indicators.get("quotes", 0) >= 2 else "🟠",
+            "icon": "" if indicators.get("quotes", 0) >= 2 else "",
         },
         {
             "name": "Attribution signals",
             "value": indicators.get("attributions", 0),
             "desc": 'Phrases like "according to", "said", or "reported"',
-            "icon": "🟢" if indicators.get("attributions", 0) >= 2 else "🔴",
+            "icon": "" if indicators.get("attributions", 0) >= 2 else "",
         },
         {
             "name": "Numbers and figures",
             "value": indicators.get("numbers", 0),
             "desc": "Visible statistics, counts, percentages, or amounts",
-            "icon": "🟢" if indicators.get("numbers", 0) >= 1 else "🟠",
+            "icon": "" if indicators.get("numbers", 0) >= 1 else "",
         },
         {
             "name": "Loaded words",
             "value": indicators.get("loaded_words", 0),
             "desc": "Emotionally charged or sensational wording",
-            "icon": "🟢" if indicators.get("loaded_words", 0) == 0 else ("🟠" if indicators.get("loaded_words", 0) < 3 else "🔴"),
+            "icon": "" if indicators.get("loaded_words", 0) == 0 else ("" if indicators.get("loaded_words", 0) < 3 else "🔴"),
         },
         {
             "name": "Uncertainty markers",
             "value": indicators.get("hedges", 0),
             "desc": 'Qualifiers like "may", "could", or "appears"',
-            "icon": "🟢" if indicators.get("hedges", 0) >= 1 else "🟠",
+            "icon": "" if indicators.get("hedges", 0) >= 1 else "",
         },
         {
             "name": "Named sources",
             "value": indicators.get("named_sources", 0),
             "desc": "Distinct named people clearly used as sources",
-            "icon": "🟢" if indicators.get("named_sources", 0) >= 2 else "🔴",
+            "icon": "" if indicators.get("named_sources", 0) >= 2 else "",
         },
         {
             "name": "Stakeholder coverage",
             "value": indicators.get("stakeholder_hints", 0),
             "desc": "Signals that different sides or affected groups are mentioned",
-            "icon": "🟢" if indicators.get("stakeholder_hints", 0) >= 2 else "🟠",
+            "icon": "" if indicators.get("stakeholder_hints", 0) >= 2 else "",
         },
     ]
 
