@@ -57,6 +57,7 @@ def ensure_state():
         "article_url": "",
         "use_demo": False,
         "analysis_complete": False,
+        "analysis_running": False,
         "analysis": None,
     }
     for key, value in defaults.items():
@@ -634,6 +635,7 @@ with st.sidebar:
         st.session_state["article_text"] = DEMO_ARTICLE
         st.session_state["use_demo"] = True
         st.session_state["analysis_complete"] = False
+        st.session_state["analysis_running"] = False
         st.session_state["analysis"] = None
 
 render_section_label("Input")
@@ -694,7 +696,6 @@ with in_right:
         )
 
 article_text = st.session_state.get("article_text", "")
-
 run_analysis = st.button("Run Editorial Audit", use_container_width=True)
 
 if run_analysis:
@@ -705,6 +706,10 @@ if run_analysis:
     if not article_text or len(article_text.strip()) < 250:
         st.warning("Please provide a longer article.")
         st.stop()
+
+    st.session_state["analysis_running"] = True
+    st.session_state["analysis_complete"] = False
+    st.session_state["analysis"] = None
 
     client = get_client(api_key)
 
@@ -743,6 +748,7 @@ if run_analysis:
         )
 
     st.session_state["analysis"] = result
+    st.session_state["analysis_running"] = False
     st.session_state["analysis_complete"] = True
 
 if st.session_state.get("analysis_complete") and st.session_state.get("analysis") is not None:
@@ -1047,6 +1053,9 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
             st.write(missing_text)
             st.markdown("### Stakeholder review")
             st.write(stakeholder_text)
+
+elif st.session_state.get("analysis_running"):
+    st.info("Editorial analysis is running...")
 
 else:
     render_section_label("Prototype logic")
