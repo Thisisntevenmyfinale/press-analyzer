@@ -1,5 +1,4 @@
 import streamlit as st
-from datetime import date
 
 from src.article_extractor import extract_article_from_url
 from src.claim_analyzer import (
@@ -25,14 +24,20 @@ from src.scoring import (
 from src.utils import average_score, risk_badge_label
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Page config
+# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="PressAnalyzer",
-    page_icon="🗞",
+    page_icon="📰",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-DEMO_ARTICLE = """Die Gier ist zurück an der Wall Street, und sie trägt die Handschrift von Elon Musk und Sam Altman. Während die globale Geopolitik durch den Konflikt im Nahen Osten in den Grundfesten erschüttert wird, bereitet sich die US-Börse auf ein Spektakel vor, das alle bisherigen Dimensionen sprengen könnte. Die Zahlen des ersten Quartals 2026 sprechen eine deutliche Sprache: Das Emissionsvolumen bei Aktienverkäufen schoss um 40 Prozent auf atemberaubende 211 Milliarden Dollar nach oben. Es ist der stärkste Jahresauftakt seit dem Rekordjahr 2021 – ein finanzielles Hochamt inmitten des globalen Chaos.
+# ─────────────────────────────────────────────────────────────────────────────
+# Demo article
+# ─────────────────────────────────────────────────────────────────────────────
+DEMO_ARTICLE = """
+Die Gier ist zurück an der Wall Street, und sie trägt die Handschrift von Elon Musk und Sam Altman. Während die globale Geopolitik durch den Konflikt im Nahen Osten in den Grundfesten erschüttert wird, bereitet sich die US-Börse auf ein Spektakel vor, das alle bisherigen Dimensionen sprengen könnte. Die Zahlen des ersten Quartals 2026 sprechen eine deutliche Sprache: Das Emissionsvolumen bei Aktienverkäufen schoss um 40 Prozent auf atemberaubende 211 Milliarden Dollar nach oben. Es ist der stärkste Jahresauftakt seit dem Rekordjahr 2021 – ein finanzielles Hochamt inmitten des globalen Chaos.
 
 Doch die eigentliche Prüfung steht erst noch bevor. Der Markt bereitet sich auf den „Urknall" vor: SpaceX steht kurz davor, an die Börse zu gehen. Mit einer angestrebten Bewertung von bis zu 1,75 Billionen Dollar und einem geplanten Emissionsvolumen von über 75 Milliarden Dollar wäre dies nicht nur ein Börsengang, sondern eine Machtdemonstration des Silicon Valley gegenüber der klassischen Industrie.
 
@@ -40,616 +45,924 @@ Hinter dem Weltraum-Giganten SpaceX drängt die nächste Welle der Disruption au
 
 „Die Widerstandsfähigkeit, die wir in diesem Markt angesichts all der Turbulenzen da draußen gesehen haben, ist ganz bemerkenswert", so John Kolz, Global Head of Equity Capital Markets bei Barclays.
 
-Während in den USA die Tech-Träume die Kurse treiben, zeigt sich in Europa ein deutlich nüchterneres, aber ebenso lukratives Bild. Hier ist das IPO-Geschäft fest in der Hand der Rüstungsindustrie. Der tschechische Verteidigungskonzern CSG markierte mit einem 4,5-Milliarden-Dollar-Börsengang das bisherige Highlight des Quartals.""".strip()
+Während in den USA die Tech-Träume die Kurse treiben, zeigt sich in Europa ein deutlich nüchterneres, aber ebenso lukratives Bild. Hier ist das IPO-Geschäft fest in der Hand der Rüstungsindustrie. Der tschechische Verteidigungskonzern CSG markierte mit einem 4,5-Milliarden-Dollar-Börsengang das bisherige Highlight des Quartals.
+""".strip()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CSS
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --ink:        #0d0d0d;
-  --paper:      #f5f0e8;
-  --paper2:     #ede8dc;
-  --paper3:     #fff;
-  --rule:       #1a1a1a;
-  --rule-light: #c8bfaa;
-  --red:        #c0161e;
-  --red-bg:     #fef2f2;
-  --amber:      #b56a00;
-  --amber-bg:   #fef8ec;
-  --green:      #1a6b3c;
-  --green-bg:   #f0faf5;
-  --muted:      #5a5245;
-  --serif:      'Playfair Display', Georgia, serif;
-  --body:       'Source Serif 4', Georgia, serif;
-  --mono:       'DM Mono', 'Courier New', monospace;
+  --bg:        #0a0a0f;
+  --surface:   #111118;
+  --surface2:  #16161f;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --text:      #e8e6f0;
+  --muted:     #888899;
+  --accent:    #7c6af7;
+  --accent2:   #a89cf8;
+  --red:       #f04060;
+  --amber:     #f0a030;
+  --green:     #30c080;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
 }
 
-html, body, .stApp { background: var(--paper) !important; }
-.main .block-container { max-width: 1320px; padding: 0 2rem 5rem; background: var(--paper); }
+html, body, .stApp { background: var(--bg) !important; font-family: var(--sans); }
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] { background: var(--ink) !important; border-right: none !important; }
-[data-testid="stSidebar"] * { color: #d8d0c4 !important; font-family: var(--mono) !important; font-size: 0.78rem !important; }
-[data-testid="stSidebar"] .stTextInput input {
-  background: #1c1c1c !important; border: 1px solid #3a3a3a !important;
-  color: #e8e0d0 !important; border-radius: 0 !important;
+.main .block-container {
+  max-width: 1280px;
+  padding: 1.5rem 2rem 4rem;
 }
-[data-testid="stSidebar"] .stTextInput input:focus { border-color: var(--red) !important; box-shadow: none !important; }
-[data-testid="stSidebar"] .stButton > button {
-  background: var(--red) !important; color: #fff !important; border: none !important;
-  border-radius: 0 !important; letter-spacing: 0.12em !important; text-transform: uppercase !important;
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border2) !important;
 }
-[data-testid="stSidebar"] .stButton > button:hover { background: #9a1016 !important; }
-[data-testid="stSidebar"] hr { border-color: #2a2a2a !important; }
-[data-testid="stSidebar"] .stSuccess { background: #161f16 !important; border-left: 2px solid #1a6b3c !important; border-radius: 0 !important; }
+[data-testid="stSidebar"] * { color: var(--text) !important; }
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] .stTextInput label { font-size: 0.82rem !important; }
 
-/* ── Main text ── */
-h1,h2,h3,h4,h5 { font-family: var(--serif) !important; color: var(--ink) !important; }
-p, li { color: var(--ink); font-family: var(--body); }
-.stMarkdown p { color: var(--ink); line-height: 1.8; font-family: var(--body); font-size: 0.96rem; }
+/* Global text */
+h1,h2,h3,h4,h5,p,li,div,span,label { color: var(--text); }
+.stMarkdown p { color: var(--text); line-height: 1.7; }
 
-/* ── Main inputs ── */
+/* Inputs */
 .stTextInput input, .stTextArea textarea {
-  background: var(--paper3) !important; border: 1px solid var(--rule-light) !important;
-  border-radius: 0 !important; color: var(--ink) !important;
-  font-family: var(--body) !important; font-size: 0.95rem !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border2) !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+  border-radius: 0 !important;
 }
-.stTextInput input:focus, .stTextArea textarea:focus { border-color: var(--ink) !important; box-shadow: none !important; }
+.stTextInput input:focus, .stTextArea textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(124,106,247,0.2) !important;
+}
 
-/* ── Main button ── */
+/* Buttons */
 .stButton > button {
-  background: var(--ink) !important; color: var(--paper) !important; border: none !important;
-  border-radius: 0 !important; font-family: var(--mono) !important; font-size: 0.72rem !important;
-  letter-spacing: 0.16em !important; text-transform: uppercase !important; padding: 0.65rem 1.8rem !important;
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-family: var(--mono) !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  padding: 0.6rem 1.4rem !important;
+  transition: background 0.15s;
 }
-.stButton > button:hover { background: #2a2a2a !important; }
+.stButton > button:hover { background: #9080ff !important; }
 
-/* ── Tabs ── */
+/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
-  background: var(--paper) !important; border-bottom: 2px solid var(--ink) !important; gap: 0 !important;
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border2) !important;
+  gap: 0 !important;
 }
 .stTabs [data-baseweb="tab"] {
-  background: transparent !important; color: var(--muted) !important;
-  font-family: var(--mono) !important; font-size: 0.68rem !important; font-weight: 500 !important;
-  letter-spacing: 0.12em !important; text-transform: uppercase !important; border-radius: 0 !important;
-  padding: 0.55rem 1rem !important; border-bottom: 3px solid transparent !important; margin-bottom: -2px !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  font-family: var(--mono) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-radius: 0 !important;
+  padding: 0.6rem 1.2rem !important;
+  border-bottom: 2px solid transparent !important;
 }
-.stTabs [aria-selected="true"] { color: var(--ink) !important; border-bottom-color: var(--red) !important; background: var(--paper2) !important; }
+.stTabs [aria-selected="true"] {
+  color: var(--accent2) !important;
+  border-bottom-color: var(--accent) !important;
+  background: var(--surface2) !important;
+}
 
-/* ── Expander ── */
-.stExpander { border: 1px solid var(--rule-light) !important; background: var(--paper3) !important; border-radius: 0 !important; }
-.stExpander summary { font-family: var(--mono) !important; font-size: 0.76rem !important; color: var(--ink) !important; background: var(--paper2) !important; }
+/* Expander */
+.stExpander { border: 1px solid var(--border) !important; background: var(--surface) !important; border-radius: 0 !important; }
+.stExpander summary { font-family: var(--mono) !important; font-size: 0.82rem !important; color: var(--text) !important; }
 
-/* ── Status ── */
-.stStatus { background: var(--paper2) !important; border: 1px solid var(--rule-light) !important; border-left: 3px solid var(--ink) !important; border-radius: 0 !important; }
+/* Status / spinner */
+.stStatus { background: var(--surface) !important; border: 1px solid var(--border2) !important; }
 
-/* ── Alerts ── */
+/* Metric */
+[data-testid="stMetric"] { background: var(--surface) !important; padding: 1rem !important; border: 1px solid var(--border) !important; }
+[data-testid="stMetricValue"] { font-family: var(--mono) !important; color: #fff !important; font-size: 1.6rem !important; }
+[data-testid="stMetricLabel"] { font-family: var(--mono) !important; font-size: 0.72rem !important; color: var(--muted) !important; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* Alert */
 .stAlert { border-radius: 0 !important; }
-.stSuccess { border-left: 3px solid var(--green) !important; }
-.stWarning { border-left: 3px solid var(--amber) !important; }
-.stError   { border-left: 3px solid var(--red) !important; }
-.stInfo    { border-left: 3px solid var(--ink) !important; }
 
-/* ── Code/JSON ── */
-.stJson, .stCodeBlock { background: var(--paper2) !important; border: 1px solid var(--rule-light) !important; }
-pre, code { font-family: var(--mono) !important; font-size: 0.78rem !important; color: var(--ink) !important; }
+/* JSON */
+.stJson { background: var(--surface2) !important; border: 1px solid var(--border) !important; }
 
-/* ══════════════════════════════════════════
-   CUSTOM COMPONENTS
-══════════════════════════════════════════ */
+/* Code */
+.stCode, .stCodeBlock { background: var(--surface2) !important; font-family: var(--mono) !important; }
 
-.pa-masthead {
-  border-bottom: 4px double var(--ink);
-  padding: 2rem 0 1.1rem;
-  text-align: center;
-  margin-bottom: 0;
+/* Custom components */
+.pa-header {
+  border-bottom: 1px solid var(--border2);
+  padding-bottom: 1.4rem;
+  margin-bottom: 1.8rem;
 }
-.pa-masthead-dateline {
-  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 0.55rem;
+.pa-wordmark {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
 }
-.pa-masthead-title {
-  font-family: var(--serif); font-size: 4.6rem; font-weight: 900;
-  letter-spacing: -0.025em; color: var(--ink); line-height: 1; margin-bottom: 0.45rem;
-}
-.pa-masthead-title span { color: var(--red); }
-.pa-masthead-hrule { border: none; border-top: 1px solid var(--rule); margin: 0.55rem 0 0.3rem; }
-.pa-masthead-hrule2 { border: none; border-top: 1px solid var(--rule-light); margin: 0.25rem 0 0.65rem; }
-.pa-masthead-deck {
-  font-family: var(--body); font-style: italic; font-size: 1rem;
-  color: var(--muted); letter-spacing: 0.005em;
-}
-.pa-masthead-chips {
-  display: flex; justify-content: center; gap: 1.6rem;
-  margin-top: 0.75rem; flex-wrap: wrap;
-}
-.pa-masthead-chip {
-  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--muted);
-}
-.pa-masthead-chip::before { content: '◆ '; color: var(--red); font-size: 0.5rem; vertical-align: middle; }
-
-.pa-section {
-  font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
-  letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
-  border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule-light);
-  padding: 0.35rem 0; margin: 1.8rem 0 1.1rem;
+.pa-wordmark span { color: var(--accent); }
+.pa-tagline {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
 }
 
-/* Verdict splash */
 .pa-verdict {
-  padding: 2rem 2.2rem 1.8rem; margin-bottom: 0; position: relative;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  padding: 1.6rem 1.8rem;
+  margin-bottom: 1.4rem;
+  position: relative;
+  overflow: hidden;
 }
-.pa-verdict.publish { background: var(--green); }
-.pa-verdict.revise  { background: var(--amber); }
-.pa-verdict.review  { background: var(--red);   }
-.pa-verdict-eyebrow {
-  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.22em;
-  text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 0.5rem;
+.pa-verdict::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
 }
-.pa-verdict-hl {
-  font-family: var(--serif); font-size: 3.2rem; font-weight: 900;
-  color: #fff; line-height: 1; margin-bottom: 0; text-transform: uppercase; letter-spacing: -0.01em;
+.pa-verdict.publish::before  { background: var(--green); }
+.pa-verdict.revise::before   { background: var(--amber); }
+.pa-verdict.review::before   { background: var(--red); }
+
+.pa-verdict-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
 }
-.pa-verdict-rule { border: none; border-top: 1px solid rgba(255,255,255,0.25); margin: 0.9rem 0; }
+.pa-verdict-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  margin-bottom: 0.6rem;
+}
+.pa-verdict.publish  .pa-verdict-title { color: var(--green); }
+.pa-verdict.revise   .pa-verdict-title { color: var(--amber); }
+.pa-verdict.review   .pa-verdict-title { color: var(--red); }
 .pa-verdict-hint {
-  font-family: var(--body); font-style: italic; font-size: 1rem;
-  color: rgba(255,255,255,0.85); line-height: 1.65; max-width: 820px;
-}
-.pa-verdict-chips { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.1rem; }
-.pa-vchip {
-  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
-  padding: 0.28rem 0.7rem; font-family: var(--mono); font-size: 0.68rem; color: rgba(255,255,255,0.8);
-}
-.pa-vchip b { color: #fff; font-weight: 500; }
-
-/* 3-panel row */
-.pa-panel-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--rule-light); border: 1px solid var(--rule-light); }
-.pa-panel { background: var(--paper3); padding: 1.1rem 1.2rem; }
-.pa-panel-head {
-  font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
-  letter-spacing: 0.18em; text-transform: uppercase; color: var(--red);
-  border-bottom: 1px solid var(--rule-light); padding-bottom: 0.5rem; margin-bottom: 0.8rem;
-}
-.pa-panel ul { padding-left: 1rem; margin: 0; }
-.pa-panel li { font-family: var(--body); font-size: 0.87rem; line-height: 1.6; color: var(--ink); margin-bottom: 0.45rem; }
-
-/* Box */
-.pa-box { border: 1px solid var(--rule-light); background: var(--paper3); padding: 1.2rem 1.3rem; }
-.pa-box-head {
-  font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
-  border-bottom: 2px solid var(--ink); padding-bottom: 0.5rem; margin-bottom: 1rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 700px;
 }
 
-/* Score table */
-.pa-score-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0; border-bottom: 1px solid var(--rule-light); }
-.pa-score-row:last-child { border-bottom: none; }
-.pa-score-lbl { font-family: var(--body); font-size: 0.87rem; color: var(--muted); width: 130px; flex-shrink: 0; }
-.pa-score-bar-bg { flex: 1; height: 5px; background: var(--paper2); border: 1px solid var(--rule-light); overflow: hidden; }
-.pa-score-bar-fill { height: 100%; }
-.pa-score-num { font-family: var(--mono); font-size: 0.82rem; font-weight: 500; color: var(--ink); width: 36px; text-align: right; flex-shrink: 0; }
-
-/* Indicator list */
-.pa-ind-row { display: flex; justify-content: space-between; padding: 0.48rem 0; border-bottom: 1px solid var(--rule-light); }
-.pa-ind-row:last-child { border-bottom: none; }
-.pa-ind-key { font-family: var(--body); font-size: 0.87rem; color: var(--muted); }
-.pa-ind-val { font-family: var(--mono); font-size: 0.88rem; font-weight: 500; color: var(--ink); }
-.pa-ind-val.warn { color: var(--red); }
-
-/* Claim card */
-.pa-claim {
-  background: var(--paper3); border-top: 1px solid var(--rule-light);
-  border-left: 4px solid transparent; padding: 0.9rem 1rem; margin-bottom: 1px;
+.pa-meta-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  flex-wrap: wrap;
 }
-.pa-claim.high   { border-left-color: var(--red); }
-.pa-claim.medium { border-left-color: var(--amber); }
-.pa-claim.low    { border-left-color: var(--green); }
-.pa-claim-eyebrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.42rem; }
-.pa-claim-num { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.pa-claim-badge { font-family: var(--mono); font-size: 0.6rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border: 1px solid; }
-.pa-claim-badge.high   { color: var(--red);   border-color: var(--red);   background: var(--red-bg); }
-.pa-claim-badge.medium { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
-.pa-claim-badge.low    { color: var(--green); border-color: var(--green); background: var(--green-bg); }
-.pa-claim-body { font-family: var(--body); font-size: 0.91rem; line-height: 1.55; color: var(--ink); margin-bottom: 0.38rem; }
-.pa-claim-reason { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); padding-top: 0.35rem; border-top: 1px solid var(--rule-light); }
+.pa-meta-chip {
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  padding: 0.45rem 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+.pa-meta-chip .chip-key { color: var(--muted); margin-right: 0.4rem; }
+.pa-meta-chip .chip-val { color: #fff; font-weight: 600; }
 
-/* Badges */
-.pa-badge { display: inline-block; font-family: var(--mono); font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border: 1px solid; }
-.pa-badge.strong   { color: var(--green); border-color: var(--green); background: var(--green-bg); }
-.pa-badge.moderate { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
-.pa-badge.weak     { color: var(--red);   border-color: var(--red);   background: var(--red-bg); }
+.pa-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.2rem 1.4rem;
+  height: 100%;
+}
+.pa-panel-title {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.pa-panel ul { padding-left: 1.1rem; margin: 0; }
+.pa-panel li { color: var(--text); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem; }
+.pa-panel p  { color: var(--text); font-size: 0.9rem; line-height: 1.6; margin: 0; }
 
-.pa-rule       { border: none; border-top: 1px solid var(--rule-light); margin: 1.4rem 0; }
-.pa-rule-heavy { border: none; border-top: 2px solid var(--ink); margin: 1.8rem 0; }
+.pa-score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+.pa-score-label {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  width: 120px;
+  flex-shrink: 0;
+}
+.pa-score-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pa-score-bar-fill { height: 100%; transition: width 0.4s ease; }
+.pa-score-num {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pa-claim-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.8rem;
+  position: relative;
+  padding-left: 1.6rem;
+}
+.pa-claim-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 3px; height: 100%;
+}
+.pa-claim-card.high::before   { background: var(--red); }
+.pa-claim-card.medium::before { background: var(--amber); }
+.pa-claim-card.low::before    { background: var(--green); }
+
+.pa-claim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.pa-claim-type {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pa-claim-badge {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pa-claim-badge.high   { background: rgba(240,64,96,0.15);  color: var(--red);   border: 1px solid rgba(240,64,96,0.3); }
+.pa-claim-badge.medium { background: rgba(240,160,48,0.15); color: var(--amber); border: 1px solid rgba(240,160,48,0.3); }
+.pa-claim-badge.low    { background: rgba(48,192,128,0.15); color: var(--green); border: 1px solid rgba(48,192,128,0.3); }
+
+.pa-claim-text {
+  font-size: 0.92rem;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 0.45rem;
+}
+.pa-claim-reason {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pa-indicator-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+.pa-indicator-box {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+.pa-indicator-val {
+  font-family: var(--mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+.pa-indicator-key {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+.pa-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.4rem 0;
+}
+
+.pa-section-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pa-consistency-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.pa-consistency-badge.strong   { background: rgba(48,192,128,0.15); color: var(--green); border: 1px solid rgba(48,192,128,0.3); }
+.pa-consistency-badge.moderate { background: rgba(240,160,48,0.15); color: var(--amber); border: 1px solid rgba(240,160,48,0.3); }
+.pa-consistency-badge.weak     { background: rgba(240,64,96,0.15);  color: var(--red);   border: 1px solid rgba(240,64,96,0.3); }
 
 @media (max-width: 900px) {
-  .pa-masthead-title { font-size: 2.8rem; }
-  .pa-verdict-hl { font-size: 2.1rem; }
-  .pa-panel-row { grid-template-columns: 1fr; }
+  .pa-indicator-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 def ensure_state():
-    for k, v in {"article_text":"","article_url":"","use_demo":False,
-                 "analysis_complete":False,"analysis_running":False,"analysis":None}.items():
+    defaults = {
+        "article_text": "",
+        "article_url": "",
+        "use_demo": False,
+        "analysis_complete": False,
+        "analysis_running": False,
+        "analysis": None,
+    }
+    for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
 
+
 def get_api_key():
-    try: return st.secrets["OPENAI_API_KEY"]
-    except: return None
+    try:
+        return st.secrets["OPENAI_API_KEY"]
+    except Exception:
+        return None
 
-def safe_preview(text, limit=220):
+
+def safe_preview(text: str, limit: int = 200) -> str:
     text = " ".join(text.split())
-    return text[:limit].rstrip()+"…" if len(text)>limit else text
+    return text[:limit].rstrip() + "…" if len(text) > limit else text
 
-def risk_css(s): return "high" if s>=75 else "medium" if s>=55 else "low"
-def risk_label(s): return "High risk" if s>=75 else "Med risk" if s>=55 else "Low risk"
-def score_color(s): return "var(--green)" if s>=75 else "var(--amber)" if s>=55 else "var(--red)"
-def verdict_class(st_): return {"Publish":"publish","Revise":"revise"}.get(st_,"review")
-def verdict_headline(st_): return {"Publish":"Clear to Publish","Revise":"Revision Required"}.get(st_,"Escalate for Review")
 
-def claim_reason(claim, ctype, score):
-    if ctype in ["Predictive","Interpretive","Causal"]: return "Forward-looking or interpretive — explicit qualification needed."
-    if ctype == "Attributed allegation": return "Attribution quality is the primary editorial risk factor."
-    if score >= 75: return "High-impact claim — solid evidence required before publication."
-    if score >= 55: return "Material claim warranting a closer sourcing check."
+def risk_css_class(score: int) -> str:
+    if score >= 75:
+        return "high"
+    if score >= 55:
+        return "medium"
+    return "low"
+
+
+def risk_label(score: int) -> str:
+    if score >= 75:
+        return "High risk"
+    if score >= 55:
+        return "Med risk"
+    return "Low risk"
+
+
+def score_color(score: int) -> str:
+    if score >= 75:
+        return "#30c080"
+    if score >= 55:
+        return "#f0a030"
+    return "#f04060"
+
+
+def verdict_css_class(status: str) -> str:
+    if status == "Publish":
+        return "publish"
+    if status == "Revise":
+        return "revise"
+    return "review"
+
+
+def verdict_display(status: str) -> str:
+    if status == "Publish":
+        return "✓ READY TO PUBLISH"
+    if status == "Revise":
+        return "⚠ REVISION REQUIRED"
+    return "⊗ ESCALATE FOR REVIEW"
+
+
+def compact_reason(claim: str, claim_type: str, score: int) -> str:
+    if claim_type in ["Predictive", "Interpretive", "Causal"]:
+        return "Contains forward-looking or interpretive logic — needs stronger qualification."
+    if claim_type == "Attributed allegation":
+        return "Attribution quality is the primary risk factor here."
+    if score >= 75:
+        return "High-impact claim — requires solid evidential support before publication."
+    if score >= 55:
+        return "Material enough to warrant a closer sourcing review."
     return "Comparatively lower risk among extracted claims."
 
-def top_risk_claims(claims, article_text, indicators, n=6):
-    rows = [{"i":i,"claim":c,"score":claim_risk_score(c,article_text,indicators),"type":classify_claim_type(c)}
-            for i,c in enumerate(claims,1)]
-    rows.sort(key=lambda x:x["score"],reverse=True)
-    return rows[:n]
 
-def run_full_analysis(client, article_text):
-    indicators     = compute_indicators(article_text)
-    ind_scores     = indicator_based_scores(indicators)
-    raw_sc, llm_sc = press_scorecard(client, article_text)
-    final_sc       = merge_scores(llm_sc, ind_scores, llm_weight=0.7)
-    avg            = average_score(final_sc)
-    claims         = extract_claims(client, article_text)
-    dec_text       = editorial_decision(client, article_text)
-    miss_text      = analyze_missing_perspectives(client, article_text)
-    sth_text       = stakeholder_review(client, article_text)
-    verdict        = final_editorial_verdict(final_sc, indicators, claims, article_text)
-    hl_label, hl_reason = headline_body_consistency(article_text)
-    return dict(
-        indicators=indicators, ind_scores=ind_scores, raw_sc=raw_sc,
-        llm_sc=llm_sc, final_sc=final_sc, avg=avg,
-        quality=risk_badge_label(avg),
-        hint=decision_hint_from_scores(final_sc),
-        claims=claims, dec_text=dec_text, miss_text=miss_text,
-        sth_text=sth_text, verdict=verdict,
-        hl_label=hl_label, hl_reason=hl_reason,
-    )
+def top_risk_claims(claims, article_text, indicators, top_n=6):
+    rows = []
+    for i, claim in enumerate(claims, 1):
+        score = claim_risk_score(claim, article_text, indicators)
+        rows.append({
+            "index": i, "claim": claim, "score": score,
+            "type": classify_claim_type(claim), "label": risk_label(score),
+            "css": risk_css_class(score),
+        })
+    rows.sort(key=lambda x: x["score"], reverse=True)
+    return rows[:top_n]
+
+
+def run_full_analysis(client, article_text: str):
+    indicators = compute_indicators(article_text)
+    indicator_scores = indicator_based_scores(indicators)
+    raw_scorecard, llm_scores = press_scorecard(client, article_text)
+    final_scores = merge_scores(llm_scores, indicator_scores, llm_weight=0.7)
+    avg = average_score(final_scores)
+    quality_label = risk_badge_label(avg)
+    score_hint = decision_hint_from_scores(final_scores)
+    claims = extract_claims(client, article_text)
+    decision_text = editorial_decision(client, article_text)
+    missing_text = analyze_missing_perspectives(client, article_text)
+    stakeholder_text = stakeholder_review(client, article_text)
+    verdict = final_editorial_verdict(final_scores, indicators, claims, article_text)
+    headline_label, headline_reason = headline_body_consistency(article_text)
+    return {
+        "indicators": indicators,
+        "indicator_scores": indicator_scores,
+        "raw_scorecard": raw_scorecard,
+        "llm_scores": llm_scores,
+        "final_scores": final_scores,
+        "avg_score": avg,
+        "quality_label": quality_label,
+        "score_hint": score_hint,
+        "claims": claims,
+        "decision_text": decision_text,
+        "missing_text": missing_text,
+        "stakeholder_text": stakeholder_text,
+        "verdict": verdict,
+        "headline_label": headline_label,
+        "headline_reason": headline_reason,
+    }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# State + Sidebar
+# Sidebar
 # ─────────────────────────────────────────────────────────────────────────────
 ensure_state()
 
 with st.sidebar:
-    st.markdown(
-        '<div style="font-family:\'Playfair Display\',serif;font-size:1.4rem;font-weight:900;'
-        'color:#f5f0e8;padding:0.9rem 0 0.3rem;letter-spacing:-0.01em">'
-        'Press<span style="color:#c0161e">Analyzer</span></div>'
-        '<div style="font-family:\'DM Mono\',monospace;font-size:0.6rem;letter-spacing:0.16em;'
-        'text-transform:uppercase;color:#555;border-bottom:1px solid #2a2a2a;padding-bottom:0.8rem;'
-        'margin-bottom:0.9rem">Editorial Review System</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### ⚙ Configuration")
+    st.divider()
 
     secret_key = get_api_key()
     if secret_key:
-        st.success("API key loaded", icon="🔑")
+        st.success("OpenAI key loaded from secrets", icon="🔑")
         api_key = secret_key
     else:
         api_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-...")
 
-    st.markdown('<div style="height:0.3rem"></div>', unsafe_allow_html=True)
-    input_mode  = st.radio("Input mode",  ["Paste article text","Article URL"], index=1)
-    review_mode = st.radio("Workspace",   ["Editor (compact)","Analyst (full)"], index=0)
-    st.markdown('<hr style="border-color:#222;margin:0.9rem 0">', unsafe_allow_html=True)
-    st.markdown('<div style="font-family:\'DM Mono\',monospace;font-size:0.6rem;letter-spacing:0.14em;'
-                'text-transform:uppercase;color:#555;margin-bottom:0.5rem">Demo Article</div>',
-                unsafe_allow_html=True)
-    if st.button("Load Demo Article", use_container_width=True):
-        st.session_state.update({"article_text":DEMO_ARTICLE,"use_demo":True,
-                                  "analysis_complete":False,"analysis_running":False,"analysis":None})
+    st.divider()
+    input_mode = st.radio("Input mode", ["Paste article text", "Article URL"], index=1)
+    review_mode = st.radio("Workspace mode", ["Editor (compact)", "Analyst (full)"], index=0)
+
+    st.divider()
+    st.markdown("**Demo**")
+    if st.button("Load demo article", use_container_width=True):
+        st.session_state.update({
+            "article_text": DEMO_ARTICLE,
+            "use_demo": True,
+            "analysis_complete": False,
+            "analysis_running": False,
+            "analysis": None,
+        })
         st.rerun()
-    st.markdown('<div style="font-family:\'DM Mono\',monospace;font-size:0.58rem;color:#3a3a3a;'
-                'margin-top:1.2rem;line-height:1.6">Supports public article URLs.<br>'
-                'Paywalled pages may extract partially.</div>', unsafe_allow_html=True)
+
+    st.divider()
+    st.markdown(
+        "<span style='font-size:0.76rem;color:#666;font-family:IBM Plex Mono,monospace'>"
+        "PressAnalyzer · Pre-publication review prototype"
+        "</span>",
+        unsafe_allow_html=True,
+    )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Masthead
+# Header
 # ─────────────────────────────────────────────────────────────────────────────
-today_str = date.today().strftime("%A, %B %-d, %Y")
-
-st.markdown(f"""
-<div class="pa-masthead">
-  <div class="pa-masthead-dateline">{today_str} &nbsp;·&nbsp; Pre-Publication Editorial Review System &nbsp;·&nbsp; Prototype</div>
-  <div class="pa-masthead-title">Press<span>Analyzer</span></div>
-  <hr class="pa-masthead-hrule">
-  <hr class="pa-masthead-hrule2">
-  <div class="pa-masthead-deck">AI-assisted newsroom audit &mdash; claim risk triage, sourcing analysis, balance scoring &amp; editorial decision support</div>
-  <div class="pa-masthead-chips">
-    <span class="pa-masthead-chip">Claim Risk Triage</span>
-    <span class="pa-masthead-chip">Sourcing Audit</span>
-    <span class="pa-masthead-chip">Balance Scoring</span>
-    <span class="pa-masthead-chip">Missing Voices</span>
-    <span class="pa-masthead-chip">Editorial Panel Simulation</span>
-    <span class="pa-masthead-chip">Neutral Rewrite</span>
-  </div>
+st.markdown("""
+<div class="pa-header">
+  <div class="pa-wordmark">Press<span>Analyzer</span></div>
+  <div class="pa-tagline">Pre-publication editorial review · claim risk triage · sourcing & balance audit</div>
 </div>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Input
-# ─────────────────────────────────────────────────────────────────────────────
-st.markdown('<div class="pa-section">Submit Article for Review</div>', unsafe_allow_html=True)
 
-col_in, col_guide = st.columns([2.5, 1], gap="large")
-with col_in:
+# ─────────────────────────────────────────────────────────────────────────────
+# Input section
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown('<div class="pa-section-label">Input</div>', unsafe_allow_html=True)
+
+col_input, col_info = st.columns([2.4, 1], gap="large")
+
+with col_input:
     if input_mode == "Paste article text":
-        txt = st.text_area("Article text", value=st.session_state.get("article_text",""),
-                           height=260, placeholder="Paste full article text here…", label_visibility="collapsed")
-        st.session_state["article_text"] = txt
+        article_text_input = st.text_area(
+            "Article text",
+            value=st.session_state.get("article_text", ""),
+            height=280,
+            placeholder="Paste a full article draft here...",
+            label_visibility="collapsed",
+        )
+        st.session_state["article_text"] = article_text_input
     else:
-        url = st.text_input("Article URL", value=st.session_state.get("article_url",""),
-                            placeholder="https://www.reuters.com/…", label_visibility="collapsed")
-        st.session_state["article_url"] = url
-        if url.strip():
+        article_url = st.text_input(
+            "Article URL",
+            value=st.session_state.get("article_url", ""),
+            placeholder="https://www.reuters.com/...",
+            label_visibility="collapsed",
+        )
+        st.session_state["article_url"] = article_url
+        if article_url.strip():
             try:
-                extracted = extract_article_from_url(url.strip())
+                extracted = extract_article_from_url(article_url.strip())
                 st.session_state["article_text"] = extracted
-                st.success(f"Extracted {len(extracted.split())} words from URL.")
+                st.success(f"Extracted {len(extracted.split())} words.")
                 with st.expander("Preview extracted text"):
                     st.write(extracted[:3000])
             except Exception as e:
                 st.error(f"Extraction failed: {e}")
+
     run_btn = st.button("▶  Run Editorial Audit", use_container_width=True)
 
-with col_guide:
+with col_info:
     st.markdown("""
-<div class="pa-box">
-  <div class="pa-box-head">Audit covers</div>
-  <div class="pa-ind-row"><span class="pa-ind-key" style="font-weight:600;color:var(--ink)">Sourcing</span><span class="pa-ind-val" style="font-size:0.78rem;color:var(--muted)">Attribution density</span></div>
-  <div class="pa-ind-row"><span class="pa-ind-key" style="font-weight:600;color:var(--ink)">Balance</span><span class="pa-ind-val" style="font-size:0.78rem;color:var(--muted)">Stakeholder coverage</span></div>
-  <div class="pa-ind-row"><span class="pa-ind-key" style="font-weight:600;color:var(--ink)">Tone</span><span class="pa-ind-val" style="font-size:0.78rem;color:var(--muted)">Loaded language</span></div>
-  <div class="pa-ind-row"><span class="pa-ind-key" style="font-weight:600;color:var(--ink)">Transparency</span><span class="pa-ind-val" style="font-size:0.78rem;color:var(--muted)">Fact vs. inference</span></div>
-  <div class="pa-ind-row" style="border-bottom:none"><span class="pa-ind-key" style="font-weight:600;color:var(--ink)">Claims</span><span class="pa-ind-val" style="font-size:0.78rem;color:var(--muted)">Per-claim risk score</span></div>
-</div>""", unsafe_allow_html=True)
+<div class="pa-panel">
+  <div class="pa-panel-title">What this tool checks</div>
+  <ul>
+    <li><strong>Sourcing</strong> — named attribution density</li>
+    <li><strong>Balance</strong> — stakeholder coverage</li>
+    <li><strong>Tone Neutrality</strong> — loaded language</li>
+    <li><strong>Transparency</strong> — fact vs. inference</li>
+    <li><strong>Claim Risk</strong> — per-claim triage</li>
+    <li><strong>Missing Voices</strong> — gaps analysis</li>
+  </ul>
+</div>
+""", unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Run
+# Run analysis
 # ─────────────────────────────────────────────────────────────────────────────
-article_text = st.session_state.get("article_text","")
+article_text = st.session_state.get("article_text", "")
 
 if run_btn:
     if not api_key:
-        st.warning("Please enter an OpenAI API key."); st.stop()
+        st.warning("Please enter an OpenAI API key.")
+        st.stop()
     if len(article_text.strip()) < 250:
-        st.warning("Article too short — please provide at least a few paragraphs."); st.stop()
-    st.session_state.update({"analysis_running":True,"analysis_complete":False,"analysis":None})
-    with st.status("Running editorial analysis…", expanded=True) as sb:
-        st.write("Computing structural indicators…")
-        st.write("Scoring sourcing, balance, tone, transparency…")
-        st.write("Extracting high-impact claims…")
-        st.write("Running missing-perspectives & panel review…")
+        st.warning("Article is too short. Please provide at least a few paragraphs.")
+        st.stop()
+
+    st.session_state.update({"analysis_running": True, "analysis_complete": False, "analysis": None})
+
+    with st.status("Running editorial analysis…", expanded=True) as status_box:
+        st.write("🔍 Computing structural indicators…")
+        st.write("📊 Scoring sourcing, transparency, balance and tone…")
+        st.write("🧩 Extracting high-impact claims…")
+        st.write("🗣 Running missing-perspective and panel review…")
         result = run_full_analysis(get_client(api_key), article_text)
-        sb.update(label="Analysis complete ✓", state="complete")
-    st.session_state.update({"analysis":result,"analysis_running":False,"analysis_complete":True})
+        status_box.update(label="Analysis complete ✓", state="complete")
+
+    st.session_state.update({"analysis": result, "analysis_running": False, "analysis_complete": True})
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Results
 # ─────────────────────────────────────────────────────────────────────────────
 if st.session_state.get("analysis_complete") and st.session_state.get("analysis"):
-    d   = st.session_state["analysis"]
-    v   = d["verdict"]
-    fs  = d["final_sc"]
-    ind = d["indicators"]
-    claims = d["claims"]
-    top = top_risk_claims(claims, article_text, ind, n=6)
-    vc  = verdict_class(v["status"])
-    hl_cls = d["hl_label"].lower() if d["hl_label"].lower() in ("strong","moderate","weak") else "moderate"
+    d = st.session_state["analysis"]
 
-    st.markdown('<div class="pa-rule-heavy"></div>', unsafe_allow_html=True)
+    indicators    = d["indicators"]
+    final_scores  = d["final_scores"]
+    avg_score     = d["avg_score"]
+    quality_label = d["quality_label"]
+    score_hint    = d["score_hint"]
+    claims        = d["claims"]
+    decision_text = d["decision_text"]
+    missing_text  = d["missing_text"]
+    stakeholder_text = d["stakeholder_text"]
+    verdict       = d["verdict"]
+    headline_label = d["headline_label"]
+    headline_reason = d["headline_reason"]
+    raw_scorecard = d["raw_scorecard"]
+    indicator_scores = d["indicator_scores"]
 
-    # ── VERDICT ──────────────────────────────────────────────────────────────
-    st.markdown('<div class="pa-section">Editorial Verdict</div>', unsafe_allow_html=True)
+    top_claims = top_risk_claims(claims, article_text, indicators, top_n=6)
 
-    chips_html = "".join([
-        f'<div class="pa-vchip">{k} <b>{val}</b></div>'
-        for k, val in [("Severity", v['severity']), ("Confidence", v['confidence']),
-                       ("Quality", d['quality']), ("Avg score", d['avg'] or "N/A"),
-                       ("Headline/body", d['hl_label']), ("Claims found", len(claims))]
-    ])
-    st.markdown(f"""
-<div class="pa-verdict {vc}">
-  <div class="pa-verdict-eyebrow">Final Editorial Decision</div>
-  <div class="pa-verdict-hl">{verdict_headline(v['status'])}</div>
-  <hr class="pa-verdict-rule">
-  <div class="pa-verdict-hint">{d['hint']}</div>
-  <div class="pa-verdict-chips">{chips_html}</div>
-</div>""", unsafe_allow_html=True)
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-    # ── 3 panels ─────────────────────────────────────────────────────────────
-    b_li  = "".join(f"<li>{x}</li>" for x in (v["blocking_issues"]     or ["No blocking issues detected."]))
-    r_li  = "".join(f"<li>{x}</li>" for x in (v["required_actions"]    or ["No mandatory actions."]))
-    nb_li = "".join(f"<li>{x}</li>" for x in (v["non_blocking_issues"] or ["No non-blocking notes."]))
+    # ── Verdict ──────────────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Editorial Verdict</div>', unsafe_allow_html=True)
+
+    css_class = verdict_css_class(verdict["status"])
+    hl = headline_label.lower()
+    if hl not in ("strong", "moderate", "weak"):
+        hl = "moderate"
 
     st.markdown(f"""
-<div class="pa-panel-row">
-  <div class="pa-panel"><div class="pa-panel-head">🚫 Blocking Issues</div><ul>{b_li}</ul></div>
-  <div class="pa-panel"><div class="pa-panel-head">🔧 Required Actions</div><ul>{r_li}</ul></div>
-  <div class="pa-panel"><div class="pa-panel-head">ℹ Non-Blocking Notes</div><ul>{nb_li}</ul></div>
+<div class="pa-verdict {css_class}">
+  <div class="pa-verdict-label">Final editorial decision</div>
+  <div class="pa-verdict-title">{verdict_display(verdict['status'])}</div>
+  <div class="pa-verdict-hint">{score_hint}</div>
+  <div class="pa-meta-row">
+    <div class="pa-meta-chip"><span class="chip-key">Severity</span><span class="chip-val">{verdict['severity']}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Confidence</span><span class="chip-val">{verdict['confidence']}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Quality</span><span class="chip-val">{quality_label}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Avg score</span><span class="chip-val">{avg_score if avg_score else 'N/A'}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Headline/body</span><span class="chip-val">{headline_label}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Claims found</span><span class="chip-val">{len(claims)}</span></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── 3-column focus panels ─────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3, gap="large")
+
+    with c1:
+        items = verdict["blocking_issues"] or ["No blocking issues automatically detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">🚫 Blocking issues</div>
+  <ul>{li_html}</ul>
 </div>""", unsafe_allow_html=True)
 
-    # ── SCORES + INDICATORS ───────────────────────────────────────────────────
-    st.markdown('<div class="pa-section">Quality Scores &amp; Text Indicators</div>', unsafe_allow_html=True)
-    sc_col, ind_col = st.columns([1,1], gap="large")
+    with c2:
+        items = verdict["required_actions"] or ["No mandatory actions detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">🔧 Required actions</div>
+  <ul>{li_html}</ul>
+</div>""", unsafe_allow_html=True)
+
+    with c3:
+        items = verdict["non_blocking_issues"] or ["No non-blocking issues detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">ℹ Non-blocking notes</div>
+  <ul>{li_html}</ul>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
+
+    # ── Scores + Indicators row ───────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Quality Scores &amp; Structural Indicators</div>', unsafe_allow_html=True)
+
+    sc_col, ind_col = st.columns([1, 1.4], gap="large")
 
     with sc_col:
-        bars_html = ""
-        for label in ["Balance","Sourcing","Tone Neutrality","Transparency"]:
-            s = fs.get(label)
-            if s is None:
-                bars_html += f'<div class="pa-score-row"><div class="pa-score-lbl">{label}</div><div class="pa-score-bar-bg" style="flex:1"></div><div class="pa-score-num">—</div></div>'
-            else:
-                col = score_color(s)
-                bars_html += f"""
+        st.markdown('<div class="pa-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="pa-panel-title">Merged scores (LLM 70% + indicators 30%)</div>', unsafe_allow_html=True)
+        for label in ["Balance", "Sourcing", "Tone Neutrality", "Transparency"]:
+            score = final_scores.get(label)
+            if score is None:
+                st.write(f"**{label}:** N/A")
+                continue
+            color = score_color(score)
+            st.markdown(f"""
 <div class="pa-score-row">
-  <div class="pa-score-lbl">{label}</div>
-  <div class="pa-score-bar-bg"><div class="pa-score-bar-fill" style="width:{s}%;background:{col}"></div></div>
-  <div class="pa-score-num">{s}</div>
-</div>"""
-        st.markdown(f"""
-<div class="pa-box">
-  <div class="pa-box-head">Merged Scores — LLM 70% + Indicators 30%</div>
-  {bars_html}
-  <div style="margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--rule-light)">
-    <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:0.45rem">Headline / Body Consistency</div>
-    <span class="pa-badge {hl_cls}">{d['hl_label']}</span>
-    <div style="font-family:var(--body);font-style:italic;font-size:0.83rem;color:var(--muted);margin-top:0.5rem;line-height:1.55">{d['hl_reason']}</div>
+  <div class="pa-score-label">{label}</div>
+  <div class="pa-score-bar-bg">
+    <div class="pa-score-bar-fill" style="width:{score}%;background:{color};"></div>
   </div>
+  <div class="pa-score-num">{score}</div>
 </div>""", unsafe_allow_html=True)
+
+        # Headline/body consistency
+        hl_badge_class = headline_label.lower() if headline_label.lower() in ("strong","moderate","weak") else "moderate"
+        st.markdown(f"""
+<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.9rem;">
+  <div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">Headline / Body consistency</div>
+  <span class="pa-consistency-badge {hl_badge_class}">{headline_label}</span>
+  <div style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">{headline_reason}</div>
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with ind_col:
-        ind_data = [
-            ("Quotes",            "quotes",            False),
-            ("Attributions",      "attributions",      ind.get("attributions",0)<2),
-            ("Numbers",           "numbers",           False),
-            ("Loaded words",      "loaded_words",      ind.get("loaded_words",0)>=3),
-            ("Hedges",            "hedges",            False),
-            ("Named sources",     "named_sources",     ind.get("named_sources",0)<2),
-            ("Stakeholder hints", "stakeholder_hints", False),
+        st.markdown('<div class="pa-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="pa-panel-title">Deterministic text indicators</div>', unsafe_allow_html=True)
+
+        ind_items = [
+            ("quotes", "Quotes"),
+            ("attributions", "Attributions"),
+            ("numbers", "Numbers"),
+            ("loaded_words", "Loaded words"),
+            ("hedges", "Hedges"),
+            ("named_sources", "Named sources"),
+            ("stakeholder_hints", "Stakeholder hints"),
         ]
         rows_html = ""
-        for label, key, warn in ind_data:
-            val = ind.get(key,0)
-            cls = " warn" if warn else ""
-            note = " ⚠" if warn else ""
-            rows_html += f'<div class="pa-ind-row"><span class="pa-ind-key">{label}</span><span class="pa-ind-val{cls}">{val}{note}</span></div>'
-
-        st.markdown(f"""
-<div class="pa-box">
-  <div class="pa-box-head">Deterministic Text Indicators</div>
-  {rows_html}
-  <div style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid var(--rule-light)">
-    ⚠ marks values outside recommended thresholds
-  </div>
+        for key, label in ind_items:
+            val = indicators.get(key, 0)
+            # flag concern vs ok
+            concern = False
+            if key == "named_sources" and val < 2:
+                concern = True
+            if key == "attributions" and val < 2:
+                concern = True
+            if key == "loaded_words" and val >= 3:
+                concern = True
+            color = "var(--red)" if concern else "var(--text)"
+            rows_html += f"""
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid var(--border);">
+  <span style="font-size:0.85rem;color:var(--muted)">{label}</span>
+  <span style="font-family:var(--mono);font-size:0.95rem;font-weight:700;color:{color}">{val}</span>
+</div>"""
+        st.markdown(rows_html, unsafe_allow_html=True)
+        st.markdown("""
+<div style="font-size:0.75rem;color:var(--muted);margin-top:0.7rem;line-height:1.5">
+  Red values indicate indicators outside recommended thresholds.
 </div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── CLAIM RISK MAP ────────────────────────────────────────────────────────
-    st.markdown('<div class="pa-section">Claim Risk Map</div>', unsafe_allow_html=True)
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-    if not top:
+    # ── Claim risk map ────────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Claim Risk Map</div>', unsafe_allow_html=True)
+
+    if not top_claims:
         st.info("No claims were extracted from this article.")
     else:
-        col_a, col_b = st.columns(2, gap="large")
-        for col, batch in [(col_a, top[:3]), (col_b, top[3:])]:
+        left_claims = top_claims[:3]
+        right_claims = top_claims[3:]
+
+        clm_left, clm_right = st.columns(2, gap="large")
+
+        for col, batch in [(clm_left, left_claims), (clm_right, right_claims)]:
             with col:
                 for row in batch:
-                    css   = risk_css(row["score"])
-                    badge = risk_label(row["score"])
-                    why   = claim_reason(row["claim"], row["type"], row["score"])
+                    reason = compact_reason(row["claim"], row["type"], row["score"])
                     st.markdown(f"""
-<div class="pa-claim {css}">
-  <div class="pa-claim-eyebrow">
-    <span class="pa-claim-num">#{row['i']} &nbsp;·&nbsp; {row['type']}</span>
-    <span class="pa-claim-badge {css}">{badge} · {row['score']}/100</span>
+<div class="pa-claim-card {row['css']}">
+  <div class="pa-claim-header">
+    <span class="pa-claim-type">#{row['index']} · {row['type']}</span>
+    <span class="pa-claim-badge {row['css']}">{row['label']} · {row['score']}/100</span>
   </div>
-  <div class="pa-claim-body">{safe_preview(row['claim'],230)}</div>
-  <div class="pa-claim-reason">{why}</div>
+  <div class="pa-claim-text">{safe_preview(row['claim'], 220)}</div>
+  <div class="pa-claim-reason">{reason}</div>
 </div>""", unsafe_allow_html=True)
 
-    # ── DEEP ANALYSIS ─────────────────────────────────────────────────────────
-    st.markdown('<div class="pa-section">Deep Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-    compact = "Editor" in review_mode
-    tab_labels = (["Missing Perspectives","Editorial Panel","Claim Review","Revision","Raw / Debug"]
-                  if compact else
-                  ["Decision Report","Missing Perspectives","Editorial Panel","Claim Review","Revision","Indicators","Raw / Debug"])
-    tabs = st.tabs(tab_labels)
+    # ── Deep analysis tabs ────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Deep Analysis</div>', unsafe_allow_html=True)
 
-    def tab_missing(t):
-        with t:
+    if "Editor" in review_mode:
+        tabs = st.tabs(["Missing Perspectives", "Editorial Panel", "Claim Review", "Revision", "Raw / Debug"])
+    else:
+        tabs = st.tabs(["Decision Report", "Missing Perspectives", "Editorial Panel", "Claim Review", "Revision", "Indicators", "Raw / Debug"])
+
+    def tab_missing(tab):
+        with tab:
             st.subheader("Missing voices, evidence & context")
-            st.write(d["miss_text"])
+            st.write(missing_text)
 
-    def tab_panel(t):
-        with t:
+    def tab_panel(tab):
+        with tab:
             st.subheader("Simulated editorial panel")
-            st.write(d["sth_text"])
+            st.write(stakeholder_text)
 
-    def tab_claims(t):
-        with t:
+    def tab_claims(tab):
+        with tab:
             st.subheader("Claim-by-claim deep review")
-            if not claims: st.info("No claims extracted."); return
+            if not claims:
+                st.info("No claims extracted.")
+                return
             for i, claim in enumerate(claims, 1):
                 ctype = classify_claim_type(claim)
-                risk  = claim_risk_score(claim, article_text, ind)
-                with st.expander(f"Claim {i}  ·  {ctype}  ·  Risk {risk}/100"):
+                risk = claim_risk_score(claim, article_text, indicators)
+                with st.expander(f"Claim {i}  ·  {ctype}  ·  {risk}/100"):
                     st.markdown(f"**Claim:** {claim}")
-                    with st.spinner("Analysing…"):
-                        res = analyze_claim(get_client(api_key), claim, article_text)
-                    st.write(res)
+                    with st.spinner("Analysing claim…"):
+                        result = analyze_claim(get_client(api_key), claim, article_text)
+                    st.write(result)
 
-    def tab_revision(t):
-        with t:
+    def tab_revision(tab):
+        with tab:
             st.subheader("Revision support")
             st.markdown("**Priority actions**")
-            for item in (v["required_actions"] or ["None."]):
+            for item in (verdict["required_actions"] or ["None."]):
                 st.markdown(f"- {item}")
             st.divider()
             if st.button("Generate neutral rewrite"):
                 with st.spinner("Generating rewrite…"):
-                    rw = rewrite_neutral(get_client(api_key), article_text)
-                st.write(rw)
+                    rewritten = rewrite_neutral(get_client(api_key), article_text)
+                st.write(rewritten)
             else:
-                st.info("Click to generate a publication-safe rewrite of the article.")
+                st.info("Click to generate a more neutral, publication-safe rewrite of the article.")
 
-    def tab_raw(t):
-        with t:
-            st.subheader("Raw outputs & debug")
-            st.markdown("**Senior editor decision (LLM)**"); st.write(d["dec_text"])
+    def tab_raw(tab):
+        with tab:
+            st.subheader("Raw outputs & debug data")
+            st.markdown("**Senior-editor decision (LLM raw)**")
+            st.write(decision_text)
             st.divider()
-            st.markdown("**Raw scorecard**"); st.code(d["raw_sc"])
-            st.markdown("**Indicator scores**"); st.json(d["ind_scores"])
-            st.markdown("**Final merged scores**"); st.json(d["final_sc"])
+            st.markdown("**Raw scorecard**")
+            st.code(raw_scorecard)
+            st.divider()
+            st.markdown("**Indicator scores (deterministic)**")
+            st.json(indicator_scores)
+            st.markdown("**Final merged scores**")
+            st.json(final_scores)
 
-    if compact:
-        tab_missing(tabs[0]); tab_panel(tabs[1]); tab_claims(tabs[2]); tab_revision(tabs[3]); tab_raw(tabs[4])
+    if "Editor" in review_mode:
+        tab_missing(tabs[0])
+        tab_panel(tabs[1])
+        tab_claims(tabs[2])
+        tab_revision(tabs[3])
+        tab_raw(tabs[4])
     else:
         with tabs[0]:
             st.subheader("Pre-publication decision report")
-            st.markdown(f"**Status:** `{v['status']}` &nbsp; **Severity:** `{v['severity']}` &nbsp; **Confidence:** `{v['confidence']}`")
+            st.markdown(f"**Status:** `{verdict['status']}`  |  **Severity:** `{verdict['severity']}`  |  **Confidence:** `{verdict['confidence']}`")
             st.divider()
-            for heading, items in [("Blocking issues",v["blocking_issues"]),
-                                    ("Non-blocking issues",v["non_blocking_issues"]),
-                                    ("Required actions",v["required_actions"])]:
-                st.markdown(f"**{heading}**")
-                for item in (items or ["None."]): st.markdown(f"- {item}")
+            st.markdown("**Blocking issues**")
+            for item in (verdict["blocking_issues"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.markdown("**Non-blocking issues**")
+            for item in (verdict["non_blocking_issues"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.markdown("**Required actions**")
+            for item in (verdict["required_actions"] or ["None."]):
+                st.markdown(f"- {item}")
             st.divider()
-            st.markdown("**LLM senior-editor decision**"); st.write(d["dec_text"])
-        tab_missing(tabs[1]); tab_panel(tabs[2]); tab_claims(tabs[3]); tab_revision(tabs[4])
+            st.markdown("**LLM senior-editor decision**")
+            st.write(decision_text)
+
+        tab_missing(tabs[1])
+        tab_panel(tabs[2])
+        tab_claims(tabs[3])
+        tab_revision(tabs[4])
+
         with tabs[5]:
             st.subheader("Indicators & scoring detail")
-            for label, data in [("Raw indicators",d["indicators"]),("Indicator scores",d["ind_scores"]),
-                                 ("LLM scores",d["llm_sc"]),("Merged scores",d["final_sc"])]:
-                st.markdown(f"**{label}**"); st.json(data)
+            st.markdown("**Raw indicators**")
+            st.json(indicators)
+            st.markdown("**Indicator-derived scores**")
+            st.json(indicator_scores)
+            st.markdown("**LLM scores**")
+            st.json(d["llm_scores"])
+            st.markdown("**Final merged scores**")
+            st.json(final_scores)
+
         tab_raw(tabs[6])
 
 elif st.session_state.get("analysis_running"):
-    st.info("Analysis running…")
+    st.info("Analysis is running…")
