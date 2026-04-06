@@ -1,4 +1,3 @@
-import textwrap
 import streamlit as st
 
 from src.article_extractor import extract_article_from_url
@@ -81,12 +80,10 @@ st.markdown(
             --red: #d72638;
             --green: #17b26a;
             --amber: #f59e0b;
-            --soft: rgba(255,255,255,0.05);
         }
 
         .stApp {
-            background:
-                linear-gradient(180deg, #090909 0%, #0d0d0d 100%);
+            background: linear-gradient(180deg, #090909 0%, #0d0d0d 100%);
             color: var(--ink);
         }
 
@@ -101,12 +98,7 @@ st.markdown(
             border-right: 1px solid var(--line);
         }
 
-        h1, h2, h3, h4, h5 {
-            color: var(--ink);
-            letter-spacing: -0.02em;
-        }
-
-        p, li, div, span, label {
+        h1, h2, h3, h4, h5, p, li, div, span, label {
             color: var(--ink);
         }
 
@@ -785,7 +777,6 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
             <div class="verdict-deck">
                 {score_hint}
             </div>
-
             <div class="meta-strip">
                 <div class="meta-box">
                     <div class="mini">Severity</div>
@@ -1076,16 +1067,5 @@ else:
 - It turns claim review into a **visual risk map** instead of a text wall  
 - It gives a fast **quick-fix plan** instead of only diagnostics  
 - It keeps deep analysis available without overwhelming the default view  
-"""
-    )
-
-    st.markdown("### Strong next steps")
-    st.markdown(
-        """
-- Compare **original vs revised** versions of the same article  
-- Add a **headline rewrite assistant**  
-- Let editors mark claims as **resolved / unresolved**  
-- Export a one-page **pre-publication review sheet**  
-- Add a **side-by-side diff** showing how revisions improved publication readiness  
 """
     )
