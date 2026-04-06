@@ -30,10 +30,7 @@ def run_prompt(client: OpenAI, prompt: str, temperature: float = 0.2) -> str:
                     "pre-publication review. Be structured, grounded, concise, and avoid hype."
                 ),
             },
-            {
-                "role": "user",
-                "content": prompt,
-            },
+            {"role": "user", "content": prompt},
         ],
         temperature=temperature,
     )
@@ -47,10 +44,7 @@ def extract_claims(client: OpenAI, article: str) -> list[str]:
 
 
 def analyze_claim(client: OpenAI, claim: str, article: str) -> str:
-    prompt = CLAIM_ANALYSIS_PROMPT.format(
-        claim=claim,
-        article=article[:9000],
-    )
+    prompt = CLAIM_ANALYSIS_PROMPT.format(claim=claim, article=article[:9000])
     return run_prompt(client, prompt, temperature=0.1)
 
 

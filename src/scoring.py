@@ -27,11 +27,9 @@ def indicator_based_scores(indicators: dict) -> dict:
 def merge_scores(llm_scores: dict, indicator_scores: dict, llm_weight: float = 0.7) -> dict:
     keys = ["Balance", "Sourcing", "Tone Neutrality", "Transparency"]
     merged = {}
-
     for key in keys:
         llm_val = llm_scores.get(key)
         ind_val = indicator_scores.get(key)
-
         if llm_val is None and ind_val is None:
             merged[key] = None
         elif llm_val is None:
@@ -40,7 +38,6 @@ def merge_scores(llm_scores: dict, indicator_scores: dict, llm_weight: float = 0
             merged[key] = llm_val
         else:
             merged[key] = round(llm_weight * llm_val + (1 - llm_weight) * ind_val)
-
     return merged
 
 
@@ -48,11 +45,9 @@ def decision_hint_from_scores(scores: dict) -> str:
     vals = [v for v in scores.values() if isinstance(v, int)]
     if not vals:
         return "Insufficient scoring information."
-
     avg = sum(vals) / len(vals)
     sourcing = scores.get("Sourcing", 0)
     transparency = scores.get("Transparency", 0)
-
     if sourcing < 45 or transparency < 45:
         return "Manual review is likely warranted because sourcing or transparency is too weak."
     if avg < 60:
@@ -64,16 +59,15 @@ def decision_hint_from_scores(scores: dict) -> str:
 
 def classify_claim_type(claim: str) -> str:
     text = claim.lower()
-
-    if any(word in text for word in ["will", "could", "may", "might", "expected", "likely", "forecast", "prüfen", "plant"]):
+    if any(w in text for w in ["will", "could", "may", "might", "expected", "likely", "forecast", "prüfen", "plant"]):
         return "Predictive"
-    if any(word in text for word in ["because", "due to", "led to", "caused", "resulted in", "führt", "wegen", "verursacht"]):
+    if any(w in text for w in ["because", "due to", "led to", "caused", "resulted in", "führt", "wegen", "verursacht"]):
         return "Causal"
-    if any(word in text for word in ["according to", "said", "claimed", "reported", "alleged", "laut", "zufolge", "insidern"]):
+    if any(w in text for w in ["according to", "said", "claimed", "reported", "alleged", "laut", "zufolge", "insidern"]):
         return "Attributed allegation"
-    if any(word in text for word in ["should", "unacceptable", "dangerous", "outrageous", "wrong", "hochgefährlich"]):
+    if any(w in text for w in ["should", "unacceptable", "dangerous", "outrageous", "wrong", "hochgefährlich"]):
         return "Evaluative"
-    if any(word in text for word in ["suggests", "appears", "seems", "indicates", "signals", "scheint", "wirkt"]):
+    if any(w in text for w in ["suggests", "appears", "seems", "indicates", "signals", "scheint", "wirkt"]):
         return "Interpretive"
     return "Factual"
 
@@ -86,36 +80,29 @@ def claim_risk_score(claim: str, article_text: str, indicators: dict) -> int:
 
     if claim_type in ["Attributed allegation", "Interpretive", "Causal", "Predictive", "Evaluative"]:
         score += 12
-
-    if any(word in claim_lower for word in [
+    if any(w in claim_lower for w in [
         "attack", "blame", "scandal", "fraud", "corrupt", "illegal",
         "hochgefährlich", "machtdemonstration", "urknall", "manisch", "panik"
     ]):
         score += 12
-
-    if not any(word in claim_lower for word in [
+    if not any(w in claim_lower for w in [
         "according to", "said", "reported", "stated", "announced", "laut", "so", "zufolge"
     ]):
         score += 8
-
-    if any(word in claim_lower for word in [
+    if any(w in claim_lower for w in [
         "will", "could", "may", "might", "appears", "seems", "suggests",
         "könnte", "scheint", "soll", "prüfen", "plant"
     ]):
         score += 6
-
     if indicators.get("attributions", 0) < 2:
         score += 8
-
     if indicators.get("named_sources", 0) < 2:
         score += 8
-
     if indicators.get("loaded_words", 0) >= 3:
         score += 8
-
-    if "response" not in article_lower and "statement" not in article_lower and "according to" not in article_lower and "laut" not in article_lower:
+    if ("response" not in article_lower and "statement" not in article_lower
+            and "according to" not in article_lower and "laut" not in article_lower):
         score += 6
-
     return clamp(score)
 
 
@@ -123,7 +110,6 @@ def headline_candidate(article_text: str) -> str:
     lines = [line.strip() for line in article_text.splitlines() if line.strip()]
     if not lines:
         return ""
-
     first = lines[0]
     if len(first.split()) <= 18:
         return first
@@ -134,10 +120,8 @@ def headline_body_consistency(article_text: str) -> tuple[str, str]:
     headline = headline_candidate(article_text)
     if not headline:
         return "Unknown", "No clear headline-like opener was available."
-
     headline_lower = headline.lower()
     body_lower = article_text.lower()
-
     strong_words = [
         "attack", "shocking", "massive", "blasted", "furious", "dramatic", "explosive",
         "direct attack", "urknall", "hochgefährlich", "manisch", "panik", "machtdemonstration"
@@ -146,10 +130,8 @@ def headline_body_consistency(article_text: str) -> tuple[str, str]:
         "according to", "said", "reported", "statement", "data", "document", "confirmed",
         "announced", "laut", "daten", "erklärte", "bericht", "zitat"
     ]
-
-    strong_count = sum(1 for word in strong_words if word in headline_lower)
-    evidence_count = sum(1 for word in evidence_words if word in body_lower)
-
+    strong_count = sum(1 for w in strong_words if w in headline_lower)
+    evidence_count = sum(1 for w in evidence_words if w in body_lower)
     if strong_count >= 1 and evidence_count < 2:
         return "Weak", "The opening framing appears stronger than the evidence signals in the article body."
     if strong_count >= 1 and evidence_count >= 2:
@@ -159,7 +141,6 @@ def headline_body_consistency(article_text: str) -> tuple[str, str]:
 
 def derive_blocking_issues(scores: dict, indicators: dict, claims: list[str], article_text: str) -> list[str]:
     issues = []
-
     if scores.get("Sourcing", 100) < 45:
         issues.append("Core claims appear under-sourced for confident publication.")
     if scores.get("Transparency", 100) < 45:
@@ -168,21 +149,17 @@ def derive_blocking_issues(scores: dict, indicators: dict, claims: list[str], ar
         issues.append("Too few distinct named sources are visible for a strong editorial release decision.")
     if indicators.get("attributions", 0) < 2:
         issues.append("The text lacks sufficient attribution for several claims.")
-
     high_risk_claims = sum(1 for claim in claims if claim_risk_score(claim, article_text, indicators) >= 75)
     if high_risk_claims >= 2:
         issues.append("Multiple claims carry high publication risk and should be reviewed before release.")
-
     consistency_label, consistency_reason = headline_body_consistency(article_text)
     if consistency_label == "Weak":
         issues.append(f"Headline-to-body consistency is weak. {consistency_reason}")
-
     return issues[:4]
 
 
 def derive_non_blocking_issues(scores: dict, indicators: dict, article_text: str) -> list[str]:
     issues = []
-
     if scores.get("Balance", 100) < 65:
         issues.append("The article may benefit from more stakeholder balance or counter-positioning.")
     if scores.get("Tone Neutrality", 100) < 70:
@@ -191,15 +168,14 @@ def derive_non_blocking_issues(scores: dict, indicators: dict, article_text: str
         issues.append("Uncertainty is not clearly signaled where interpretation may be involved.")
     if indicators.get("numbers", 0) == 0:
         issues.append("The article contains little visible quantitative support.")
-    if "according to" not in article_text.lower() and "said" not in article_text.lower() and "laut" not in article_text.lower():
+    if ("according to" not in article_text.lower() and "said" not in article_text.lower()
+            and "laut" not in article_text.lower()):
         issues.append("Attribution language could be made more explicit throughout the piece.")
-
     return issues[:4]
 
 
 def required_actions(scores: dict, indicators: dict, claims: list[str], article_text: str) -> list[str]:
     actions = []
-
     if scores.get("Sourcing", 100) < 60:
         actions.append("Add clearer sourcing or named attribution to the highest-impact claims.")
     if scores.get("Transparency", 100) < 60:
@@ -208,24 +184,19 @@ def required_actions(scores: dict, indicators: dict, claims: list[str], article_
         actions.append("Include more distinct named sources or clearly attributed source positions.")
     if indicators.get("loaded_words", 0) >= 2:
         actions.append("Tone down loaded phrasing and replace it with more neutral wording.")
-
     consistency_label, _ = headline_body_consistency(article_text)
     if consistency_label == "Weak":
         actions.append("Make the opening framing more proportional to the evidence shown in the article body.")
-
     if indicators.get("attributions", 0) < 2:
         actions.append("Add explicit attribution language to the most consequential claims.")
-
     if not actions:
         actions.append("No major mandatory action detected; proceed with final editorial review.")
-
     return actions[:4]
 
 
 def final_editorial_verdict(scores: dict, indicators: dict, claims: list[str], article_text: str) -> dict:
     values = [v for v in scores.values() if isinstance(v, int)]
     avg = sum(values) / max(1, len(values))
-
     blocking = derive_blocking_issues(scores, indicators, claims, article_text)
     non_blocking = derive_non_blocking_issues(scores, indicators, article_text)
     actions = required_actions(scores, indicators, claims, article_text)

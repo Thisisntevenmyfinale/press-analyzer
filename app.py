@@ -23,34 +23,409 @@ from src.scoring import (
 )
 from src.utils import average_score, risk_badge_label
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# Page config
+# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="PressAnalyzer",
-    page_icon="🧠",
+    page_icon="📰",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# Demo article
+# ─────────────────────────────────────────────────────────────────────────────
 DEMO_ARTICLE = """
 Die Gier ist zurück an der Wall Street, und sie trägt die Handschrift von Elon Musk und Sam Altman. Während die globale Geopolitik durch den Konflikt im Nahen Osten in den Grundfesten erschüttert wird, bereitet sich die US-Börse auf ein Spektakel vor, das alle bisherigen Dimensionen sprengen könnte. Die Zahlen des ersten Quartals 2026 sprechen eine deutliche Sprache: Das Emissionsvolumen bei Aktienverkäufen schoss um 40 Prozent auf atemberaubende 211 Milliarden Dollar nach oben. Es ist der stärkste Jahresauftakt seit dem Rekordjahr 2021 – ein finanzielles Hochamt inmitten des globalen Chaos.
 
-Doch die eigentliche Prüfung steht erst noch bevor. Der Markt bereitet sich auf den „Urknall“ vor: SpaceX steht kurz davor, an die Börse zu gehen. Mit einer angestrebten Bewertung von bis zu 1,75 Billionen Dollar und einem geplanten Emissionsvolumen von über 75 Milliarden Dollar wäre dies nicht nur ein Börsengang, sondern eine Machtdemonstration des Silicon Valley gegenüber der klassischen Industrie. Es ist der Versuch, den Weltraum endgültig zu kommerzialisieren, während auf der Erde die diplomatischen Drähte glühen.
+Doch die eigentliche Prüfung steht erst noch bevor. Der Markt bereitet sich auf den „Urknall" vor: SpaceX steht kurz davor, an die Börse zu gehen. Mit einer angestrebten Bewertung von bis zu 1,75 Billionen Dollar und einem geplanten Emissionsvolumen von über 75 Milliarden Dollar wäre dies nicht nur ein Börsengang, sondern eine Machtdemonstration des Silicon Valley gegenüber der klassischen Industrie.
 
-Hinter dem Weltraum-Giganten SpaceX drängt die nächste Welle der Disruption auf das Parkett. OpenAI und der Konkurrent Anthropic prüfen laut Insidern Listings, die ebenfalls zweistellige Milliardenbeträge in die Kassen spülen sollen. Diese KI-Infrastruktur-Titel erweisen sich als erstaunlich resistent gegenüber der allgemeinen Software-Schwäche, die viele Standardwerte in den letzten Wochen nach unten riss. Investoren scheinen bereit zu sein, geopolitische Risiken auszublenden, solange das Versprechen auf die technologische Singularität lockt.
+Hinter dem Weltraum-Giganten SpaceX drängt die nächste Welle der Disruption auf das Parkett. OpenAI und der Konkurrent Anthropic prüfen laut Insidern Listings, die ebenfalls zweistellige Milliardenbeträge in die Kassen spülen sollen. Diese KI-Infrastruktur-Titel erweisen sich als erstaunlich resistent gegenüber der allgemeinen Software-Schwäche.
 
-„Die Widerstandsfähigkeit, die wir in diesem Markt angesichts all der Turbulenzen da draußen gesehen haben, ist ganz bemerkenswert“, so John Kolz, Global Head of Equity Capital Markets bei Barclays. Er bringt das Paradoxon auf den Punkt: Es gebe zwar unzählige Gründe für Investoren, den Hörer erst einmal nicht abzunehmen und abzuwarten, bis sich der Staub gelegt hat. Doch das Gegenteil ist der Fall. Das Kapital drängt mit einer fast schon manischen Intensität in neue Emissionen, als gäbe es kein Morgen nach dem Krieg.
+„Die Widerstandsfähigkeit, die wir in diesem Markt angesichts all der Turbulenzen da draußen gesehen haben, ist ganz bemerkenswert", so John Kolz, Global Head of Equity Capital Markets bei Barclays.
 
-Während in den USA die Tech-Träume die Kurse treiben, zeigt sich in Europa ein deutlich nüchterneres, aber ebenso lukratives Bild. Hier ist das IPO-Geschäft fest in der Hand der Rüstungsindustrie. Der tschechische Verteidigungskonzern CSG markierte mit einem 4,5-Milliarden-Dollar-Börsengang das bisherige Highlight des Quartals. Es ist die bittere ökonomische Realität einer neuen Weltordnung: Wo geschossen wird, verdienen die Ausrüster – und die Anleger greifen beherzt zu.
+Während in den USA die Tech-Träume die Kurse treiben, zeigt sich in Europa ein deutlich nüchterneres, aber ebenso lukratives Bild. Hier ist das IPO-Geschäft fest in der Hand der Rüstungsindustrie. Der tschechische Verteidigungskonzern CSG markierte mit einem 4,5-Milliarden-Dollar-Börsengang das bisherige Highlight des Quartals.
 """.strip()
 
 
-def get_api_key():
-    try:
-        return st.secrets["OPENAI_API_KEY"]
-    except Exception:
-        return None
+# ─────────────────────────────────────────────────────────────────────────────
+# CSS
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:        #0a0a0f;
+  --surface:   #111118;
+  --surface2:  #16161f;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --text:      #e8e6f0;
+  --muted:     #888899;
+  --accent:    #7c6af7;
+  --accent2:   #a89cf8;
+  --red:       #f04060;
+  --amber:     #f0a030;
+  --green:     #30c080;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
+}
+
+html, body, .stApp { background: var(--bg) !important; font-family: var(--sans); }
+
+.main .block-container {
+  max-width: 1280px;
+  padding: 1.5rem 2rem 4rem;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border2) !important;
+}
+[data-testid="stSidebar"] * { color: var(--text) !important; }
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] .stTextInput label { font-size: 0.82rem !important; }
+
+/* Global text */
+h1,h2,h3,h4,h5,p,li,div,span,label { color: var(--text); }
+.stMarkdown p { color: var(--text); line-height: 1.7; }
+
+/* Inputs */
+.stTextInput input, .stTextArea textarea {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border2) !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+  border-radius: 0 !important;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(124,106,247,0.2) !important;
+}
+
+/* Buttons */
+.stButton > button {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-family: var(--mono) !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  padding: 0.6rem 1.4rem !important;
+  transition: background 0.15s;
+}
+.stButton > button:hover { background: #9080ff !important; }
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border2) !important;
+  gap: 0 !important;
+}
+.stTabs [data-baseweb="tab"] {
+  background: transparent !important;
+  color: var(--muted) !important;
+  font-family: var(--mono) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-radius: 0 !important;
+  padding: 0.6rem 1.2rem !important;
+  border-bottom: 2px solid transparent !important;
+}
+.stTabs [aria-selected="true"] {
+  color: var(--accent2) !important;
+  border-bottom-color: var(--accent) !important;
+  background: var(--surface2) !important;
+}
+
+/* Expander */
+.stExpander { border: 1px solid var(--border) !important; background: var(--surface) !important; border-radius: 0 !important; }
+.stExpander summary { font-family: var(--mono) !important; font-size: 0.82rem !important; color: var(--text) !important; }
+
+/* Status / spinner */
+.stStatus { background: var(--surface) !important; border: 1px solid var(--border2) !important; }
+
+/* Metric */
+[data-testid="stMetric"] { background: var(--surface) !important; padding: 1rem !important; border: 1px solid var(--border) !important; }
+[data-testid="stMetricValue"] { font-family: var(--mono) !important; color: #fff !important; font-size: 1.6rem !important; }
+[data-testid="stMetricLabel"] { font-family: var(--mono) !important; font-size: 0.72rem !important; color: var(--muted) !important; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* Alert */
+.stAlert { border-radius: 0 !important; }
+
+/* JSON */
+.stJson { background: var(--surface2) !important; border: 1px solid var(--border) !important; }
+
+/* Code */
+.stCode, .stCodeBlock { background: var(--surface2) !important; font-family: var(--mono) !important; }
+
+/* Custom components */
+.pa-header {
+  border-bottom: 1px solid var(--border2);
+  padding-bottom: 1.4rem;
+  margin-bottom: 1.8rem;
+}
+.pa-wordmark {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.pa-wordmark span { color: var(--accent); }
+.pa-tagline {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+.pa-verdict {
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  padding: 1.6rem 1.8rem;
+  margin-bottom: 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+.pa-verdict::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+}
+.pa-verdict.publish::before  { background: var(--green); }
+.pa-verdict.revise::before   { background: var(--amber); }
+.pa-verdict.review::before   { background: var(--red); }
+
+.pa-verdict-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.pa-verdict-title {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  margin-bottom: 0.6rem;
+}
+.pa-verdict.publish  .pa-verdict-title { color: var(--green); }
+.pa-verdict.revise   .pa-verdict-title { color: var(--amber); }
+.pa-verdict.review   .pa-verdict-title { color: var(--red); }
+.pa-verdict-hint {
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 700px;
+}
+
+.pa-meta-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  flex-wrap: wrap;
+}
+.pa-meta-chip {
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  padding: 0.45rem 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+.pa-meta-chip .chip-key { color: var(--muted); margin-right: 0.4rem; }
+.pa-meta-chip .chip-val { color: #fff; font-weight: 600; }
+
+.pa-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.2rem 1.4rem;
+  height: 100%;
+}
+.pa-panel-title {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.pa-panel ul { padding-left: 1.1rem; margin: 0; }
+.pa-panel li { color: var(--text); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem; }
+.pa-panel p  { color: var(--text); font-size: 0.9rem; line-height: 1.6; margin: 0; }
+
+.pa-score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+.pa-score-label {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  width: 120px;
+  flex-shrink: 0;
+}
+.pa-score-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pa-score-bar-fill { height: 100%; transition: width 0.4s ease; }
+.pa-score-num {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pa-claim-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.8rem;
+  position: relative;
+  padding-left: 1.6rem;
+}
+.pa-claim-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 3px; height: 100%;
+}
+.pa-claim-card.high::before   { background: var(--red); }
+.pa-claim-card.medium::before { background: var(--amber); }
+.pa-claim-card.low::before    { background: var(--green); }
+
+.pa-claim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.pa-claim-type {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pa-claim-badge {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pa-claim-badge.high   { background: rgba(240,64,96,0.15);  color: var(--red);   border: 1px solid rgba(240,64,96,0.3); }
+.pa-claim-badge.medium { background: rgba(240,160,48,0.15); color: var(--amber); border: 1px solid rgba(240,160,48,0.3); }
+.pa-claim-badge.low    { background: rgba(48,192,128,0.15); color: var(--green); border: 1px solid rgba(48,192,128,0.3); }
+
+.pa-claim-text {
+  font-size: 0.92rem;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 0.45rem;
+}
+.pa-claim-reason {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pa-indicator-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+.pa-indicator-box {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+.pa-indicator-val {
+  font-family: var(--mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+.pa-indicator-key {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+.pa-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.4rem 0;
+}
+
+.pa-section-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pa-consistency-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.pa-consistency-badge.strong   { background: rgba(48,192,128,0.15); color: var(--green); border: 1px solid rgba(48,192,128,0.3); }
+.pa-consistency-badge.moderate { background: rgba(240,160,48,0.15); color: var(--amber); border: 1px solid rgba(240,160,48,0.3); }
+.pa-consistency-badge.weak     { background: rgba(240,64,96,0.15);  color: var(--red);   border: 1px solid rgba(240,64,96,0.3); }
+
+@media (max-width: 900px) {
+  .pa-indicator-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+""", unsafe_allow_html=True)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
 def ensure_state():
     defaults = {
         "article_text": "",
@@ -60,493 +435,86 @@ def ensure_state():
         "analysis_running": False,
         "analysis": None,
     }
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
 
-ensure_state()
+def get_api_key():
+    try:
+        return st.secrets["OPENAI_API_KEY"]
+    except Exception:
+        return None
 
 
-st.markdown(
-    """
-    <style>
-        :root {
-            --bg: #090909;
-            --panel: #111111;
-            --panel-2: #151515;
-            --ink: #f5f2eb;
-            --muted: #b9b1a6;
-            --line: rgba(255,255,255,0.12);
-            --red: #d72638;
-            --green: #18b26a;
-            --amber: #f59e0b;
-            --blue: #0d1b3d;
-        }
-
-        .stApp {
-            background: linear-gradient(180deg, #080808 0%, #0c0c0c 100%);
-            color: var(--ink);
-        }
-
-        .main .block-container {
-            max-width: 1240px;
-            padding-top: 1.2rem;
-            padding-bottom: 3rem;
-        }
-
-        [data-testid="stSidebar"] {
-            background: #0b0b0b;
-            border-right: 1px solid var(--line);
-        }
-
-        h1, h2, h3, h4, h5, p, li, div, span, label {
-            color: var(--ink);
-        }
-
-        .hero-wrap {
-            border: 1px solid var(--line);
-            background: linear-gradient(180deg, #101010 0%, #0c0c0c 100%);
-            padding: 28px 28px 24px 28px;
-            margin-bottom: 18px;
-        }
-
-        .eyebrow {
-            font-size: 0.76rem;
-            text-transform: uppercase;
-            letter-spacing: 0.16em;
-            color: #f0cfd4;
-            font-weight: 900;
-            margin-bottom: 10px;
-        }
-
-        .hero-title {
-            font-size: 4rem;
-            line-height: 0.95;
-            font-weight: 900;
-            color: #ffffff;
-            margin-bottom: 14px;
-        }
-
-        .hero-sub {
-            max-width: 860px;
-            font-size: 1.08rem;
-            line-height: 1.65;
-            color: var(--muted);
-            margin-bottom: 18px;
-        }
-
-        .hero-strip {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .hero-chip {
-            border: 1px solid var(--line);
-            background: #141414;
-            padding: 8px 12px;
-            font-size: 0.8rem;
-            font-weight: 900;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: #f6f1ea;
-        }
-
-        .section-label {
-            margin-top: 8px;
-            margin-bottom: 10px;
-            font-size: 0.74rem;
-            text-transform: uppercase;
-            letter-spacing: 0.16em;
-            font-weight: 900;
-            color: #f0cfd4;
-        }
-
-        .clean-card {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 18px;
-            height: 100%;
-            box-sizing: border-box;
-        }
-
-        .small-card {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-
-        .card-title {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            font-weight: 900;
-            color: #f0cfd4;
-            margin-bottom: 10px;
-        }
-
-        .card-copy {
-            line-height: 1.75;
-            color: #ddd7ce;
-            font-size: 0.98rem;
-        }
-
-        .input-shell {
-            border: 1px solid var(--line);
-            background: #0f0f0f;
-            padding: 18px;
-            margin-top: 8px;
-        }
-
-        .verdict-frontpage {
-            border: 2px solid #ffffff;
-            background: #0d0d0d;
-            padding: 22px 22px 18px 22px;
-            margin-bottom: 18px;
-        }
-
-        .verdict-kicker {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.16em;
-            color: #f1d2d6;
-            font-weight: 900;
-            margin-bottom: 8px;
-        }
-
-        .verdict-headline {
-            font-size: 3.2rem;
-            font-weight: 900;
-            line-height: 0.96;
-            margin-bottom: 10px;
-            color: #ffffff;
-        }
-
-        .verdict-deck {
-            font-size: 1.04rem;
-            line-height: 1.6;
-            color: #d8d3ca;
-            max-width: 950px;
-        }
-
-        .meta-strip {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .meta-box {
-            border: 1px solid var(--line);
-            background: #131313;
-            min-width: 150px;
-            padding: 12px 14px;
-        }
-
-        .meta-box .mini {
-            font-size: 0.74rem;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #c7bfb4;
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-
-        .meta-box .big {
-            font-size: 1.35rem;
-            font-weight: 900;
-            color: #ffffff;
-        }
-
-        .focus-panel {
-            border: 1px solid var(--line);
-            background: #121212;
-            padding: 16px;
-            height: 100%;
-            box-sizing: border-box;
-        }
-
-        .focus-title {
-            font-size: 0.84rem;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            font-weight: 900;
-            color: #ffffff;
-            margin-bottom: 12px;
-        }
-
-        .focus-panel ul {
-            padding-left: 18px;
-            margin: 0;
-        }
-
-        .focus-panel li {
-            margin-bottom: 8px;
-            color: #ddd7ce;
-            line-height: 1.45;
-        }
-
-        .stat-card {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            padding: 18px;
-            margin-bottom: 12px;
-        }
-
-        .stat-label {
-            font-size: 0.76rem;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #c7bfb4;
-            font-weight: 900;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #ffffff;
-            line-height: 1.0;
-            margin-top: 8px;
-        }
-
-        .tiny-note {
-            color: #b6b1a8;
-            font-size: 0.9rem;
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        .claim-tile {
-            border: 1px solid var(--line);
-            padding: 14px;
-            min-height: 185px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
-        }
-
-        .claim-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .claim-num {
-            font-size: 0.74rem;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            font-weight: 900;
-            color: #c7bfb4;
-        }
-
-        .claim-risk {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 900;
-            color: #ffffff;
-            padding: 4px 8px;
-            border: 1px solid rgba(255,255,255,0.18);
-        }
-
-        .claim-text {
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #f3eee7;
-        }
-
-        .claim-meta {
-            margin-top: 12px;
-            font-size: 0.82rem;
-            color: #d2cbc1;
-            line-height: 1.45;
-        }
-
-        .ticker {
-            border: 1px solid var(--line);
-            background: #101010;
-            padding: 14px 16px;
-            margin-bottom: 14px;
-        }
-
-        .ticker-line {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.88rem;
-            color: #d8d3ca;
-            margin-bottom: 6px;
-        }
-
-        .rule {
-            height: 1px;
-            background: var(--line);
-            margin: 18px 0;
-        }
-
-        @media (max-width: 1100px) {
-            .hero-title {
-                font-size: 3rem;
-            }
-            .verdict-headline {
-                font-size: 2.35rem;
-            }
-            .heatmap-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+def safe_preview(text: str, limit: int = 200) -> str:
+    text = " ".join(text.split())
+    return text[:limit].rstrip() + "…" if len(text) > limit else text
 
 
-def render_section_label(text: str):
-    st.markdown(f'<div class="section-label">{text}</div>', unsafe_allow_html=True)
-
-
-def render_stat_card(label: str, value: str, note: str = ""):
-    st.markdown(
-        f"""
-        <div class="stat-card">
-            <div class="stat-label">{label}</div>
-            <div class="stat-value">{value}</div>
-            <div class="tiny-note">{note}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def bullet_lines(items: list[str], fallback: str):
-    if not items:
-        st.markdown(f"- {fallback}")
-        return
-    for item in items:
-        st.markdown(f"- {item}")
-
-
-def score_color(score: int) -> str:
+def risk_css_class(score: int) -> str:
     if score >= 75:
-        return "#171717"
+        return "high"
     if score >= 55:
-        return "#241900"
-    return "#2a0d12"
-
-
-def score_border(score: int) -> str:
-    if score >= 75:
-        return "#18b26a"
-    if score >= 55:
-        return "#f59e0b"
-    return "#d72638"
+        return "medium"
+    return "low"
 
 
 def risk_label(score: int) -> str:
     if score >= 75:
         return "High risk"
     if score >= 55:
-        return "Medium risk"
+        return "Med risk"
     return "Low risk"
 
 
-def top_risk_claims(claims: list[str], article_text: str, indicators: dict, top_n: int = 6) -> list[dict]:
+def score_color(score: int) -> str:
+    if score >= 75:
+        return "#30c080"
+    if score >= 55:
+        return "#f0a030"
+    return "#f04060"
+
+
+def verdict_css_class(status: str) -> str:
+    if status == "Publish":
+        return "publish"
+    if status == "Revise":
+        return "revise"
+    return "review"
+
+
+def verdict_display(status: str) -> str:
+    if status == "Publish":
+        return "✓ READY TO PUBLISH"
+    if status == "Revise":
+        return "⚠ REVISION REQUIRED"
+    return "⊗ ESCALATE FOR REVIEW"
+
+
+def compact_reason(claim: str, claim_type: str, score: int) -> str:
+    if claim_type in ["Predictive", "Interpretive", "Causal"]:
+        return "Contains forward-looking or interpretive logic — needs stronger qualification."
+    if claim_type == "Attributed allegation":
+        return "Attribution quality is the primary risk factor here."
+    if score >= 75:
+        return "High-impact claim — requires solid evidential support before publication."
+    if score >= 55:
+        return "Material enough to warrant a closer sourcing review."
+    return "Comparatively lower risk among extracted claims."
+
+
+def top_risk_claims(claims, article_text, indicators, top_n=6):
     rows = []
-    for i, claim in enumerate(claims, start=1):
+    for i, claim in enumerate(claims, 1):
         score = claim_risk_score(claim, article_text, indicators)
-        rows.append(
-            {
-                "index": i,
-                "claim": claim,
-                "score": score,
-                "type": classify_claim_type(claim),
-                "label": risk_label(score),
-            }
-        )
+        rows.append({
+            "index": i, "claim": claim, "score": score,
+            "type": classify_claim_type(claim), "label": risk_label(score),
+            "css": risk_css_class(score),
+        })
     rows.sort(key=lambda x: x["score"], reverse=True)
     return rows[:top_n]
-
-
-def compact_reason_for_claim(claim: str, claim_type: str, score: int) -> str:
-    if claim_type in ["Predictive", "Interpretive", "Causal"]:
-        return "This claim contains interpretation or forward-looking logic and needs stronger qualification."
-    if claim_type == "Attributed allegation":
-        return "This claim depends on attribution quality and should be checked for source clarity."
-    if score >= 75:
-        return "This claim is high-impact and should not appear overly certain without stronger support."
-    if score >= 55:
-        return "This claim appears material enough to justify a closer sourcing review."
-    return "This claim appears comparatively less risky than the others."
-
-
-def evidence_health_notes(indicators: dict, final_scores: dict) -> list[str]:
-    notes = []
-
-    if final_scores.get("Sourcing", 0) < 60:
-        notes.append("Sourcing is not yet strong enough for a comfortable publish decision.")
-    else:
-        notes.append("Sourcing signals are present, but still deserve editorial validation.")
-
-    if final_scores.get("Transparency", 0) < 60:
-        notes.append("The line between fact, inference, and interpretation is not always clear.")
-    else:
-        notes.append("Transparency is acceptable, though not consistently strong across the text.")
-
-    if indicators.get("attributions", 0) < 2:
-        notes.append("Direct attribution language is sparse relative to the article's strongest claims.")
-    else:
-        notes.append("The article includes at least some visible attribution signals.")
-
-    if indicators.get("hedges", 0) == 0:
-        notes.append("Uncertainty markers are mostly absent, which can make interpretation sound too settled.")
-    else:
-        notes.append("Some uncertainty language is present, which helps calibrate reader expectations.")
-
-    return notes[:4]
-
-
-def reader_takeaway(verdict: dict, final_scores: dict, indicators: dict) -> str:
-    if verdict["status"] == "Review manually":
-        return (
-            "A reader could treat the story's strongest conclusions as settled fact even though the visible sourcing and "
-            "transparency signals are not strong enough for that level of certainty."
-        )
-
-    if verdict["status"] == "Revise":
-        if final_scores.get("Transparency", 0) < 60:
-            return (
-                "The likely takeaway is directionally clear, but readers may not easily distinguish reported facts from "
-                "narrative interpretation."
-            )
-        return "The article is broadly understandable, but some framing may feel stronger than the evidence presentation."
-
-    if indicators.get("attributions", 0) < 2:
-        return "The story may be publishable, but clearer attribution would still improve audience trust."
-    return "The story is comparatively readable for publication, with manageable trust risk."
-
-
-def verdict_headline(status: str) -> str:
-    if status == "Review manually":
-        return "ESCALATE TO MANUAL REVIEW"
-    if status == "Revise":
-        return "REVISION REQUIRED"
-    return "READY TO PUBLISH"
-
-
-def safe_preview(text: str, limit: int = 220) -> str:
-    text = " ".join(text.split())
-    if len(text) <= limit:
-        return text
-    return text[:limit].rstrip() + "…"
 
 
 def run_full_analysis(client, article_text: str):
@@ -554,25 +522,22 @@ def run_full_analysis(client, article_text: str):
     indicator_scores = indicator_based_scores(indicators)
     raw_scorecard, llm_scores = press_scorecard(client, article_text)
     final_scores = merge_scores(llm_scores, indicator_scores, llm_weight=0.7)
-    avg_score = average_score(final_scores)
-    quality_label = risk_badge_label(avg_score)
+    avg = average_score(final_scores)
+    quality_label = risk_badge_label(avg)
     score_hint = decision_hint_from_scores(final_scores)
-
     claims = extract_claims(client, article_text)
     decision_text = editorial_decision(client, article_text)
     missing_text = analyze_missing_perspectives(client, article_text)
     stakeholder_text = stakeholder_review(client, article_text)
-
     verdict = final_editorial_verdict(final_scores, indicators, claims, article_text)
     headline_label, headline_reason = headline_body_consistency(article_text)
-
     return {
         "indicators": indicators,
         "indicator_scores": indicator_scores,
         "raw_scorecard": raw_scorecard,
         "llm_scores": llm_scores,
         "final_scores": final_scores,
-        "avg_score": avg_score,
+        "avg_score": avg,
         "quality_label": quality_label,
         "score_hint": score_hint,
         "claims": claims,
@@ -585,505 +550,419 @@ def run_full_analysis(client, article_text: str):
     }
 
 
-st.markdown(
-    """
-    <div class="hero-wrap">
-        <div class="eyebrow">Editorial Decision Support Prototype</div>
-        <div class="hero-title">PressAnalyzer</div>
-        <div class="hero-sub">
-            A pre-publication review system that helps editors decide whether a story should be published,
-            revised, or escalated. Built around decision clarity, claim risk triage, and explainable newsroom logic.
-        </div>
-        <div class="hero-strip">
-            <div class="hero-chip">Decision first</div>
-            <div class="hero-chip">Claim risk map</div>
-            <div class="hero-chip">Missing voices</div>
-            <div class="hero-chip">Editorial panel</div>
-            <div class="hero-chip">Revision guidance</div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# ─────────────────────────────────────────────────────────────────────────────
+# Sidebar
+# ─────────────────────────────────────────────────────────────────────────────
+ensure_state()
 
 with st.sidebar:
-    st.header("Setup")
+    st.markdown("### ⚙ Configuration")
+    st.divider()
 
-    secret_api_key = get_api_key()
-    if secret_api_key:
-        st.success("OpenAI key loaded from secrets")
-        api_key = secret_api_key
+    secret_key = get_api_key()
+    if secret_key:
+        st.success("OpenAI key loaded from secrets", icon="🔑")
+        api_key = secret_key
     else:
-        api_key = st.text_input("OpenAI API Key", type="password")
+        api_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-...")
 
-    review_mode = st.radio("Workspace mode", ["Editor", "Analyst"], index=0)
+    st.divider()
     input_mode = st.radio("Input mode", ["Paste article text", "Article URL"], index=1)
+    review_mode = st.radio("Workspace mode", ["Editor (compact)", "Analyst (full)"], index=0)
 
-    st.markdown("---")
-    st.markdown("### Recommended URL types")
-    st.markdown(
-        """
-- Reuters  
-- BBC  
-- AP  
-- public newspaper / magazine articles  
-"""
-    )
-
+    st.divider()
+    st.markdown("**Demo**")
     if st.button("Load demo article", use_container_width=True):
-        st.session_state["article_text"] = DEMO_ARTICLE
-        st.session_state["use_demo"] = True
-        st.session_state["analysis_complete"] = False
-        st.session_state["analysis_running"] = False
-        st.session_state["analysis"] = None
+        st.session_state.update({
+            "article_text": DEMO_ARTICLE,
+            "use_demo": True,
+            "analysis_complete": False,
+            "analysis_running": False,
+            "analysis": None,
+        })
+        st.rerun()
 
-
-render_section_label("Start")
-
-start_left, start_right = st.columns([2.2, 1], gap="large")
-
-with start_left:
+    st.divider()
     st.markdown(
-        """
-This prototype is built for **editorial desks, newsroom standards teams, and publication-quality review**.
-
-### It asks the core editorial question:
-**Should this article be published, revised, or escalated — and what exactly should happen next?**
-"""
+        "<span style='font-size:0.76rem;color:#666;font-family:IBM Plex Mono,monospace'>"
+        "PressAnalyzer · Pre-publication review prototype"
+        "</span>",
+        unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="input-shell">', unsafe_allow_html=True)
-    render_section_label("Input")
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Header
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="pa-header">
+  <div class="pa-wordmark">Press<span>Analyzer</span></div>
+  <div class="pa-tagline">Pre-publication editorial review · claim risk triage · sourcing & balance audit</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Input section
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown('<div class="pa-section-label">Input</div>', unsafe_allow_html=True)
+
+col_input, col_info = st.columns([2.4, 1], gap="large")
+
+with col_input:
     if input_mode == "Paste article text":
-        article_text = st.text_area(
-            "Paste article text",
+        article_text_input = st.text_area(
+            "Article text",
             value=st.session_state.get("article_text", ""),
-            height=320,
-            placeholder="Paste a full article draft or copied news text here...",
+            height=280,
+            placeholder="Paste a full article draft here...",
+            label_visibility="collapsed",
         )
-        st.session_state["article_text"] = article_text
+        st.session_state["article_text"] = article_text_input
     else:
         article_url = st.text_input(
-            "Paste article URL",
+            "Article URL",
             value=st.session_state.get("article_url", ""),
-            placeholder="e.g. https://www.reuters.com/world/... or https://www.ft.com/content/...",
+            placeholder="https://www.reuters.com/...",
+            label_visibility="collapsed",
         )
         st.session_state["article_url"] = article_url
-
-        if article_url:
+        if article_url.strip():
             try:
-                extracted = extract_article_from_url(article_url)
+                extracted = extract_article_from_url(article_url.strip())
                 st.session_state["article_text"] = extracted
-                st.success("Article extracted successfully.")
-                st.caption(f"Extracted length: {len(extracted.split())} words")
+                st.success(f"Extracted {len(extracted.split())} words.")
                 with st.expander("Preview extracted text"):
-                    st.write(extracted[:5000])
+                    st.write(extracted[:3000])
             except Exception as e:
-                st.error(f"Could not extract article: {e}")
+                st.error(f"Extraction failed: {e}")
 
-    run_analysis = st.button("Run Editorial Audit", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    run_btn = st.button("▶  Run Editorial Audit", use_container_width=True)
 
-with start_right:
-    st.markdown(
-        """
-        <div class="clean-card">
-            <div class="card-title">How to use it</div>
-            <div class="card-copy">
-                1. Insert article text or a public article URL<br><br>
-                2. Run the audit<br><br>
-                3. Read the frontpage verdict first<br><br>
-                4. Review the top risks<br><br>
-                5. Open deep analysis only if needed
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+with col_info:
+    st.markdown("""
+<div class="pa-panel">
+  <div class="pa-panel-title">What this tool checks</div>
+  <ul>
+    <li><strong>Sourcing</strong> — named attribution density</li>
+    <li><strong>Balance</strong> — stakeholder coverage</li>
+    <li><strong>Tone Neutrality</strong> — loaded language</li>
+    <li><strong>Transparency</strong> — fact vs. inference</li>
+    <li><strong>Claim Risk</strong> — per-claim triage</li>
+    <li><strong>Missing Voices</strong> — gaps analysis</li>
+  </ul>
+</div>
+""", unsafe_allow_html=True)
 
-    st.markdown(
-        """
-        <div class="small-card">
-            <div class="card-title">Input guidance</div>
-            <div class="card-copy">
-                Public links usually work best. Paywalled or highly dynamic pages may only extract partially.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
-    if st.session_state.get("use_demo"):
-        st.markdown(
-            """
-            <div class="small-card">
-                <div class="card-title">Demo mode</div>
-                <div class="card-copy">
-                    A built-in sample article is currently loaded and ready for analysis.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+# ─────────────────────────────────────────────────────────────────────────────
+# Run analysis
+# ─────────────────────────────────────────────────────────────────────────────
 article_text = st.session_state.get("article_text", "")
 
-if run_analysis:
+if run_btn:
     if not api_key:
-        st.warning("Please enter an OpenAI API key or configure Streamlit secrets.")
+        st.warning("Please enter an OpenAI API key.")
+        st.stop()
+    if len(article_text.strip()) < 250:
+        st.warning("Article is too short. Please provide at least a few paragraphs.")
         st.stop()
 
-    if not article_text or len(article_text.strip()) < 250:
-        st.warning("Please provide a longer article.")
-        st.stop()
+    st.session_state.update({"analysis_running": True, "analysis_complete": False, "analysis": None})
 
-    st.session_state["analysis_running"] = True
-    st.session_state["analysis_complete"] = False
-    st.session_state["analysis"] = None
+    with st.status("Running editorial analysis…", expanded=True) as status_box:
+        st.write("🔍 Computing structural indicators…")
+        st.write("📊 Scoring sourcing, transparency, balance and tone…")
+        st.write("🧩 Extracting high-impact claims…")
+        st.write("🗣 Running missing-perspective and panel review…")
+        result = run_full_analysis(get_client(api_key), article_text)
+        status_box.update(label="Analysis complete ✓", state="complete")
 
-    client = get_client(api_key)
+    st.session_state.update({"analysis": result, "analysis_running": False, "analysis_complete": True})
 
-    ticker_placeholder = st.empty()
 
-    with ticker_placeholder.container():
-        st.markdown(
-            """
-            <div class="ticker">
-                <div class="ticker-line">[01] Initializing editorial audit...</div>
-                <div class="ticker-line">[02] Preparing extraction, scoring, and review agents...</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+# ─────────────────────────────────────────────────────────────────────────────
+# Results
+# ─────────────────────────────────────────────────────────────────────────────
+if st.session_state.get("analysis_complete") and st.session_state.get("analysis"):
+    d = st.session_state["analysis"]
 
-    with st.status("Running editorial analysis...", expanded=True) as status:
-        st.write("Extracting structural indicators")
-        st.write("Scoring sourcing, transparency, balance, and tone")
-        st.write("Extracting high-impact claims")
-        st.write("Running senior editor, missing-perspective, and panel review")
-        result = run_full_analysis(client, article_text)
-        status.update(label="Analysis complete", state="complete")
-
-    with ticker_placeholder.container():
-        st.markdown(
-            """
-            <div class="ticker">
-                <div class="ticker-line">[01] Claim decomposition complete</div>
-                <div class="ticker-line">[02] Evidence and transparency scoring complete</div>
-                <div class="ticker-line">[03] Editorial verdict generated</div>
-                <div class="ticker-line">[04] Risk triage ready</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.session_state["analysis"] = result
-    st.session_state["analysis_running"] = False
-    st.session_state["analysis_complete"] = True
-
-if st.session_state.get("analysis_complete") and st.session_state.get("analysis") is not None:
-    data = st.session_state["analysis"]
-
-    indicators = data["indicators"]
-    indicator_scores = data["indicator_scores"]
-    raw_scorecard = data["raw_scorecard"]
-    final_scores = data["final_scores"]
-    avg_score = data["avg_score"]
-    quality_label = data["quality_label"]
-    score_hint = data["score_hint"]
-    claims = data["claims"]
-    decision_text = data["decision_text"]
-    missing_text = data["missing_text"]
-    stakeholder_text = data["stakeholder_text"]
-    verdict = data["verdict"]
-    headline_label = data["headline_label"]
-    headline_reason = data["headline_reason"]
+    indicators    = d["indicators"]
+    final_scores  = d["final_scores"]
+    avg_score     = d["avg_score"]
+    quality_label = d["quality_label"]
+    score_hint    = d["score_hint"]
+    claims        = d["claims"]
+    decision_text = d["decision_text"]
+    missing_text  = d["missing_text"]
+    stakeholder_text = d["stakeholder_text"]
+    verdict       = d["verdict"]
+    headline_label = d["headline_label"]
+    headline_reason = d["headline_reason"]
+    raw_scorecard = d["raw_scorecard"]
+    indicator_scores = d["indicator_scores"]
 
     top_claims = top_risk_claims(claims, article_text, indicators, top_n=6)
-    evidence_notes = evidence_health_notes(indicators, final_scores)
-    takeaway = reader_takeaway(verdict, final_scores, indicators)
 
-    render_section_label("Frontpage verdict")
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-    st.markdown(
-        f"""
-        <div class="verdict-frontpage">
-            <div class="verdict-kicker">Final Editorial Decision</div>
-            <div class="verdict-headline">{verdict_headline(verdict['status'])}</div>
-            <div class="verdict-deck">
-                {score_hint}
-            </div>
-            <div class="meta-strip">
-                <div class="meta-box">
-                    <div class="mini">Severity</div>
-                    <div class="big">{verdict['severity']}</div>
-                </div>
-                <div class="meta-box">
-                    <div class="mini">Confidence</div>
-                    <div class="big">{verdict['confidence']}</div>
-                </div>
-                <div class="meta-box">
-                    <div class="mini">Quality label</div>
-                    <div class="big">{quality_label}</div>
-                </div>
-                <div class="meta-box">
-                    <div class="mini">Headline / Body</div>
-                    <div class="big">{headline_label}</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    # ── Verdict ──────────────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Editorial Verdict</div>', unsafe_allow_html=True)
 
-    focus1, focus2, focus3 = st.columns(3, gap="large")
+    css_class = verdict_css_class(verdict["status"])
+    hl = headline_label.lower()
+    if hl not in ("strong", "moderate", "weak"):
+        hl = "moderate"
 
-    with focus1:
-        st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="focus-title">Why not publish as-is?</div>', unsafe_allow_html=True)
-        bullet_lines(verdict["blocking_issues"], "No blocking issue was automatically triggered.")
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+<div class="pa-verdict {css_class}">
+  <div class="pa-verdict-label">Final editorial decision</div>
+  <div class="pa-verdict-title">{verdict_display(verdict['status'])}</div>
+  <div class="pa-verdict-hint">{score_hint}</div>
+  <div class="pa-meta-row">
+    <div class="pa-meta-chip"><span class="chip-key">Severity</span><span class="chip-val">{verdict['severity']}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Confidence</span><span class="chip-val">{verdict['confidence']}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Quality</span><span class="chip-val">{quality_label}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Avg score</span><span class="chip-val">{avg_score if avg_score else 'N/A'}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Headline/body</span><span class="chip-val">{headline_label}</span></div>
+    <div class="pa-meta-chip"><span class="chip-key">Claims found</span><span class="chip-val">{len(claims)}</span></div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-    with focus2:
-        st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="focus-title">Quick fix plan</div>', unsafe_allow_html=True)
-        bullet_lines(verdict["required_actions"], "No major revision action was automatically triggered.")
-        st.markdown("</div>", unsafe_allow_html=True)
+    # ── 3-column focus panels ─────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3, gap="large")
 
-    with focus3:
-        st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="focus-title">Likely reader takeaway risk</div>', unsafe_allow_html=True)
-        st.markdown(takeaway)
-        st.markdown("</div>", unsafe_allow_html=True)
+    with c1:
+        items = verdict["blocking_issues"] or ["No blocking issues automatically detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">🚫 Blocking issues</div>
+  <ul>{li_html}</ul>
+</div>""", unsafe_allow_html=True)
 
-    render_section_label("Decision summary")
+    with c2:
+        items = verdict["required_actions"] or ["No mandatory actions detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">🔧 Required actions</div>
+  <ul>{li_html}</ul>
+</div>""", unsafe_allow_html=True)
 
-    stat1, stat2, stat3, stat4 = st.columns(4, gap="large")
-    with stat1:
-        render_stat_card("Average score", f"{avg_score if avg_score is not None else 'N/A'}", "Merged LLM + indicator score.")
-    with stat2:
-        render_stat_card("Claims extracted", str(len(claims)), "Material claims identified for triage.")
-    with stat3:
-        render_stat_card("Workspace", review_mode, "Editor = concise, Analyst = full workspace.")
-    with stat4:
-        render_stat_card("Escalation basis", verdict["status"], "Hybrid verdict from risk logic.")
+    with c3:
+        items = verdict["non_blocking_issues"] or ["No non-blocking issues detected."]
+        li_html = "".join(f"<li>{i}</li>" for i in items)
+        st.markdown(f"""
+<div class="pa-panel">
+  <div class="pa-panel-title">ℹ Non-blocking notes</div>
+  <ul>{li_html}</ul>
+</div>""", unsafe_allow_html=True)
 
-    left_col, right_col = st.columns([1.25, 1], gap="large")
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-    with left_col:
-        st.markdown("### Top risk claims")
-        if not top_claims:
-            st.info("No claims were extracted.")
-        else:
-            st.markdown('<div class="heatmap-grid">', unsafe_allow_html=True)
-            for row in top_claims:
-                bg = score_color(row["score"])
-                border = score_border(row["score"])
-                why = compact_reason_for_claim(row["claim"], row["type"], row["score"])
-                st.markdown(
-                    f"""
-                    <div class="claim-tile" style="background:{bg}; border-color:{border};">
-                        <div>
-                            <div class="claim-top">
-                                <div class="claim-num">Claim {row['index']}</div>
-                                <div class="claim-risk" style="background:{border};">{row['label']} · {row['score']}/100</div>
-                            </div>
-                            <div class="claim-text">{safe_preview(row['claim'], 180)}</div>
-                        </div>
-                        <div class="claim-meta">
-                            <strong>Type:</strong> {row['type']}<br>
-                            <strong>Why it matters:</strong> {why}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            st.markdown("</div>", unsafe_allow_html=True)
+    # ── Scores + Indicators row ───────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Quality Scores &amp; Structural Indicators</div>', unsafe_allow_html=True)
 
-    with right_col:
-        st.markdown("### Evidence & structure")
-        st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
-        bullet_lines(evidence_notes, "No notable evidence issue was detected.")
-        st.markdown('<div class="rule"></div>', unsafe_allow_html=True)
-        st.markdown("**Headline/body consistency**")
-        st.markdown(f"{headline_label} — {headline_reason}")
-        st.markdown("</div>", unsafe_allow_html=True)
+    sc_col, ind_col = st.columns([1, 1.4], gap="large")
 
-        st.markdown("### Core quality scores")
-        st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
+    with sc_col:
+        st.markdown('<div class="pa-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="pa-panel-title">Merged scores (LLM 70% + indicators 30%)</div>', unsafe_allow_html=True)
         for label in ["Balance", "Sourcing", "Tone Neutrality", "Transparency"]:
             score = final_scores.get(label)
             if score is None:
                 st.write(f"**{label}:** N/A")
-            else:
-                color = "#18b26a" if score >= 80 else "#f59e0b" if score >= 60 else "#d72638"
-                st.markdown(
-                    f"""
-                    <div style="margin-bottom: 14px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-weight:800;">{label}</span>
-                            <span>{score}/100</span>
-                        </div>
-                        <div style="width:100%; height:10px; background:#1f1f1f; border:1px solid rgba(255,255,255,0.08);">
-                            <div style="width:{score}%; height:100%; background:{color};"></div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        st.markdown("</div>", unsafe_allow_html=True)
+                continue
+            color = score_color(score)
+            st.markdown(f"""
+<div class="pa-score-row">
+  <div class="pa-score-label">{label}</div>
+  <div class="pa-score-bar-bg">
+    <div class="pa-score-bar-fill" style="width:{score}%;background:{color};"></div>
+  </div>
+  <div class="pa-score-num">{score}</div>
+</div>""", unsafe_allow_html=True)
 
-    if review_mode == "Editor":
-        render_section_label("Deep analysis")
+        # Headline/body consistency
+        hl_badge_class = headline_label.lower() if headline_label.lower() in ("strong","moderate","weak") else "moderate"
+        st.markdown(f"""
+<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.9rem;">
+  <div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;">Headline / Body consistency</div>
+  <span class="pa-consistency-badge {hl_badge_class}">{headline_label}</span>
+  <div style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">{headline_reason}</div>
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with st.expander("Open full review workspace"):
-            tabs = st.tabs(
-                [
-                    "Claim Review",
-                    "Missing Perspectives",
-                    "Editorial Panel",
-                    "Revision Support",
-                    "Indicators & Scores",
-                    "Raw Outputs",
-                ]
-            )
+    with ind_col:
+        st.markdown('<div class="pa-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="pa-panel-title">Deterministic text indicators</div>', unsafe_allow_html=True)
 
-            with tabs[0]:
-                st.subheader("Claim-by-claim review")
-                if not claims:
-                    st.info("No claims were extracted.")
-                else:
-                    for i, claim in enumerate(claims, start=1):
-                        ctype = classify_claim_type(claim)
-                        risk = claim_risk_score(claim, article_text, indicators)
-                        with st.expander(f"Claim {i} · {ctype} · {risk}/100"):
-                            st.markdown(f"**Claim:** {claim}")
-                            with st.spinner("Running detailed claim review..."):
-                                claim_result = analyze_claim(get_client(api_key), claim, article_text)
-                            st.write(claim_result)
+        ind_items = [
+            ("quotes", "Quotes"),
+            ("attributions", "Attributions"),
+            ("numbers", "Numbers"),
+            ("loaded_words", "Loaded words"),
+            ("hedges", "Hedges"),
+            ("named_sources", "Named sources"),
+            ("stakeholder_hints", "Stakeholder hints"),
+        ]
+        rows_html = ""
+        for key, label in ind_items:
+            val = indicators.get(key, 0)
+            # flag concern vs ok
+            concern = False
+            if key == "named_sources" and val < 2:
+                concern = True
+            if key == "attributions" and val < 2:
+                concern = True
+            if key == "loaded_words" and val >= 3:
+                concern = True
+            color = "var(--red)" if concern else "var(--text)"
+            rows_html += f"""
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid var(--border);">
+  <span style="font-size:0.85rem;color:var(--muted)">{label}</span>
+  <span style="font-family:var(--mono);font-size:0.95rem;font-weight:700;color:{color}">{val}</span>
+</div>"""
+        st.markdown(rows_html, unsafe_allow_html=True)
+        st.markdown("""
+<div style="font-size:0.75rem;color:var(--muted);margin-top:0.7rem;line-height:1.5">
+  Red values indicate indicators outside recommended thresholds.
+</div>""", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-            with tabs[1]:
-                st.subheader("Missing voices, evidence, and context")
-                st.write(missing_text)
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-            with tabs[2]:
-                st.subheader("Simulated editorial panel")
-                st.write(stakeholder_text)
+    # ── Claim risk map ────────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Claim Risk Map</div>', unsafe_allow_html=True)
 
-            with tabs[3]:
-                st.subheader("Revision support")
-                st.markdown("### Priority actions")
-                bullet_lines(verdict["required_actions"], "No major revision priority detected.")
-                rewrite_now = st.button("Generate neutral rewrite")
-                if rewrite_now:
-                    with st.spinner("Generating rewrite..."):
-                        rewritten = rewrite_neutral(get_client(api_key), article_text)
-                    st.write(rewritten)
-                else:
-                    st.info("Generate a more neutral and publication-safer rewrite.")
-
-            with tabs[4]:
-                st.subheader("Indicators and scoring")
-                st.markdown("### Deterministic indicators")
-                st.json(indicators)
-                st.markdown("### Indicator-based score contribution")
-                st.json(indicator_scores)
-                st.markdown("### Final merged scores")
-                st.json(final_scores)
-
-            with tabs[5]:
-                st.subheader("Raw outputs")
-                st.markdown("### Senior-editor decision")
-                st.write(decision_text)
-                st.markdown("### Raw scorecard")
-                st.code(raw_scorecard)
-
+    if not top_claims:
+        st.info("No claims were extracted from this article.")
     else:
-        render_section_label("Analyst workspace")
+        left_claims = top_claims[:3]
+        right_claims = top_claims[3:]
 
-        tabs = st.tabs(
-            [
-                "Decision Report",
-                "Claim Review",
-                "Missing Perspectives",
-                "Editorial Panel",
-                "Indicators & Scores",
-                "Revision Support",
-                "Raw Outputs",
-            ]
-        )
+        clm_left, clm_right = st.columns(2, gap="large")
 
-        with tabs[0]:
-            st.subheader("Pre-publication decision report")
-            st.markdown(f"**Status:** {verdict['status']}")
-            st.markdown(f"**Severity:** {verdict['severity']}")
-            st.markdown(f"**Confidence:** {verdict['confidence']}")
-            st.markdown("### Blocking issues")
-            bullet_lines(verdict["blocking_issues"], "None detected.")
-            st.markdown("### Non-blocking issues")
-            bullet_lines(verdict["non_blocking_issues"], "None detected.")
-            st.markdown("### Required actions")
-            bullet_lines(verdict["required_actions"], "No major action required.")
-            st.markdown("### LLM senior-editor decision")
-            st.write(decision_text)
+        for col, batch in [(clm_left, left_claims), (clm_right, right_claims)]:
+            with col:
+                for row in batch:
+                    reason = compact_reason(row["claim"], row["type"], row["score"])
+                    st.markdown(f"""
+<div class="pa-claim-card {row['css']}">
+  <div class="pa-claim-header">
+    <span class="pa-claim-type">#{row['index']} · {row['type']}</span>
+    <span class="pa-claim-badge {row['css']}">{row['label']} · {row['score']}/100</span>
+  </div>
+  <div class="pa-claim-text">{safe_preview(row['claim'], 220)}</div>
+  <div class="pa-claim-reason">{reason}</div>
+</div>""", unsafe_allow_html=True)
 
-        with tabs[1]:
-            st.subheader("Claim-by-claim review")
-            if not claims:
-                st.info("No claims were extracted.")
-            else:
-                for i, claim in enumerate(claims, start=1):
-                    ctype = classify_claim_type(claim)
-                    risk = claim_risk_score(claim, article_text, indicators)
-                    with st.expander(f"Claim {i} · {ctype} · {risk}/100"):
-                        st.markdown(f"**Claim:** {claim}")
-                        with st.spinner("Running detailed claim review..."):
-                            claim_result = analyze_claim(get_client(api_key), claim, article_text)
-                        st.write(claim_result)
+    st.markdown('<hr class="pa-divider">', unsafe_allow_html=True)
 
-        with tabs[2]:
-            st.subheader("Missing voices, evidence, and context")
+    # ── Deep analysis tabs ────────────────────────────────────────────────────
+    st.markdown('<div class="pa-section-label">Deep Analysis</div>', unsafe_allow_html=True)
+
+    if "Editor" in review_mode:
+        tabs = st.tabs(["Missing Perspectives", "Editorial Panel", "Claim Review", "Revision", "Raw / Debug"])
+    else:
+        tabs = st.tabs(["Decision Report", "Missing Perspectives", "Editorial Panel", "Claim Review", "Revision", "Indicators", "Raw / Debug"])
+
+    def tab_missing(tab):
+        with tab:
+            st.subheader("Missing voices, evidence & context")
             st.write(missing_text)
 
-        with tabs[3]:
+    def tab_panel(tab):
+        with tab:
             st.subheader("Simulated editorial panel")
             st.write(stakeholder_text)
 
-        with tabs[4]:
-            st.subheader("Indicators and scoring")
-            st.markdown("### Deterministic indicators")
-            st.json(indicators)
-            st.markdown("### Indicator-based score contribution")
-            st.json(indicator_scores)
-            st.markdown("### Final merged scores")
-            st.json(final_scores)
-            st.markdown("### Headline/body consistency")
-            st.markdown(f"**Assessment:** {headline_label}")
-            st.markdown(headline_reason)
+    def tab_claims(tab):
+        with tab:
+            st.subheader("Claim-by-claim deep review")
+            if not claims:
+                st.info("No claims extracted.")
+                return
+            for i, claim in enumerate(claims, 1):
+                ctype = classify_claim_type(claim)
+                risk = claim_risk_score(claim, article_text, indicators)
+                with st.expander(f"Claim {i}  ·  {ctype}  ·  {risk}/100"):
+                    st.markdown(f"**Claim:** {claim}")
+                    with st.spinner("Analysing claim…"):
+                        result = analyze_claim(get_client(api_key), claim, article_text)
+                    st.write(result)
 
-        with tabs[5]:
+    def tab_revision(tab):
+        with tab:
             st.subheader("Revision support")
-            st.markdown("### Priority actions")
-            bullet_lines(verdict["required_actions"], "No major revision priority detected.")
-            rewrite_now = st.button("Generate neutral rewrite")
-            if rewrite_now:
-                with st.spinner("Generating rewrite..."):
+            st.markdown("**Priority actions**")
+            for item in (verdict["required_actions"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.divider()
+            if st.button("Generate neutral rewrite"):
+                with st.spinner("Generating rewrite…"):
                     rewritten = rewrite_neutral(get_client(api_key), article_text)
                 st.write(rewritten)
             else:
-                st.info("Generate a more neutral and publication-safer rewrite.")
+                st.info("Click to generate a more neutral, publication-safe rewrite of the article.")
 
-        with tabs[6]:
-            st.subheader("Raw outputs")
-            st.markdown("### Scorecard")
-            st.code(raw_scorecard)
-            st.markdown("### Editorial decision")
+    def tab_raw(tab):
+        with tab:
+            st.subheader("Raw outputs & debug data")
+            st.markdown("**Senior-editor decision (LLM raw)**")
             st.write(decision_text)
-            st.markdown("### Missing perspectives")
-            st.write(missing_text)
-            st.markdown("### Stakeholder review")
-            st.write(stakeholder_text)
+            st.divider()
+            st.markdown("**Raw scorecard**")
+            st.code(raw_scorecard)
+            st.divider()
+            st.markdown("**Indicator scores (deterministic)**")
+            st.json(indicator_scores)
+            st.markdown("**Final merged scores**")
+            st.json(final_scores)
+
+    if "Editor" in review_mode:
+        tab_missing(tabs[0])
+        tab_panel(tabs[1])
+        tab_claims(tabs[2])
+        tab_revision(tabs[3])
+        tab_raw(tabs[4])
+    else:
+        with tabs[0]:
+            st.subheader("Pre-publication decision report")
+            st.markdown(f"**Status:** `{verdict['status']}`  |  **Severity:** `{verdict['severity']}`  |  **Confidence:** `{verdict['confidence']}`")
+            st.divider()
+            st.markdown("**Blocking issues**")
+            for item in (verdict["blocking_issues"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.markdown("**Non-blocking issues**")
+            for item in (verdict["non_blocking_issues"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.markdown("**Required actions**")
+            for item in (verdict["required_actions"] or ["None."]):
+                st.markdown(f"- {item}")
+            st.divider()
+            st.markdown("**LLM senior-editor decision**")
+            st.write(decision_text)
+
+        tab_missing(tabs[1])
+        tab_panel(tabs[2])
+        tab_claims(tabs[3])
+        tab_revision(tabs[4])
+
+        with tabs[5]:
+            st.subheader("Indicators & scoring detail")
+            st.markdown("**Raw indicators**")
+            st.json(indicators)
+            st.markdown("**Indicator-derived scores**")
+            st.json(indicator_scores)
+            st.markdown("**LLM scores**")
+            st.json(d["llm_scores"])
+            st.markdown("**Final merged scores**")
+            st.json(final_scores)
+
+        tab_raw(tabs[6])
 
 elif st.session_state.get("analysis_running"):
-    st.info("Editorial analysis is running...")
+    st.info("Analysis is running…")
