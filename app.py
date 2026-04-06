@@ -9,7 +9,7 @@ from openai import OpenAI
 
 
 # =============================================================================
-# PAGE
+# PAGE CONFIG
 # =============================================================================
 
 st.set_page_config(
@@ -35,7 +35,7 @@ Während in den USA die Tech-Träume die Kurse treiben, zeigt sich in Europa ein
 
 
 # =============================================================================
-# STYLES
+# STYLING
 # =============================================================================
 
 APP_CSS = """
@@ -45,15 +45,12 @@ APP_CSS = """
 :root {
   --bg: #060a10;
   --panel: #0d131b;
-  --panel2: #101824;
+  --panel2: #111925;
   --border: rgba(255,255,255,0.08);
   --border2: rgba(255,255,255,0.14);
-  --text: #eef2f7;
-  --muted: #9ca9bb;
-  --blue: #75a8ff;
-  --green: #37c987;
-  --amber: #f4b247;
-  --red: #ef6278;
+  --text: #edf2f7;
+  --muted: #9cabbe;
+  --blue: #73a8ff;
 }
 
 html, body, .stApp {
@@ -64,7 +61,7 @@ html, body, .stApp {
 
 .main .block-container {
   max-width: 1220px;
-  padding-top: 1.3rem;
+  padding-top: 1.2rem;
   padding-bottom: 3rem;
 }
 
@@ -86,7 +83,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, label, li {
 
 .stButton > button {
   background: var(--blue) !important;
-  color: #08111d !important;
+  color: #06111d !important;
   border: none !important;
   border-radius: 14px !important;
   font-weight: 800 !important;
@@ -94,7 +91,14 @@ h1, h2, h3, h4, h5, h6, p, span, div, label, li {
 }
 
 .stButton > button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.04);
+}
+
+div[data-testid="stMetric"] {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 1rem !important;
 }
 
 .stTabs [data-baseweb="tab-list"] {
@@ -112,22 +116,11 @@ h1, h2, h3, h4, h5, h6, p, span, div, label, li {
   border-color: var(--blue) !important;
 }
 
-div[data-testid="stMetric"] {
-  background: var(--panel) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 16px !important;
-  padding: 1rem !important;
-}
-
-.pa-shell {
-  margin-bottom: 1rem;
-}
-
 .pa-hero {
   background: linear-gradient(180deg, #0d131c 0%, #091019 100%);
   border: 1px solid var(--border2);
   border-radius: 22px;
-  padding: 1.35rem 1.45rem;
+  padding: 1.3rem 1.4rem;
   margin-bottom: 1rem;
 }
 
@@ -135,32 +128,57 @@ div[data-testid="stMetric"] {
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  margin-bottom: 0.22rem;
+  margin-bottom: 0.2rem;
 }
 
 .pa-sub {
   color: var(--muted) !important;
-  line-height: 1.5;
 }
 
-.pa-status {
+.pa-section {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 1rem 0 0.7rem 0;
+}
+
+.pa-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem 1.05rem;
+  height: 100%;
+}
+
+.pa-card-title {
+  font-size: 0.78rem;
+  color: var(--muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+}
+
+.pa-status-publish,
+.pa-status-revise,
+.pa-status-review {
   border-radius: 22px;
   padding: 1.2rem 1.25rem;
   border: 1px solid var(--border2);
   margin-bottom: 1rem;
 }
 
-.pa-status.publish {
+.pa-status-publish {
   background: rgba(55,201,135,0.08);
   border-color: rgba(55,201,135,0.32);
 }
 
-.pa-status.revise {
+.pa-status-revise {
   background: rgba(244,178,71,0.08);
   border-color: rgba(244,178,71,0.32);
 }
 
-.pa-status.review {
+.pa-status-review {
   background: rgba(239,98,120,0.08);
   border-color: rgba(239,98,120,0.32);
 }
@@ -175,167 +193,34 @@ div[data-testid="stMetric"] {
 }
 
 .pa-status-title {
-  font-size: 1.95rem;
+  font-size: 1.9rem;
   font-weight: 800;
   line-height: 1.05;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .pa-status-text {
   color: var(--muted) !important;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .pa-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.5rem;
   margin-top: 0.9rem;
 }
 
 .pa-chip {
-  background: rgba(15,23,32,0.85);
+  background: rgba(15,23,32,0.9);
   border: 1px solid var(--border2);
   border-radius: 999px;
-  padding: 0.42rem 0.72rem;
+  padding: 0.38rem 0.68rem;
   font-size: 0.8rem;
-  color: var(--text) !important;
 }
 
-.pa-card {
+.pa-claim-box {
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1rem 1.05rem;
-  height: 100%;
-}
-
-.pa-card-title {
-  font-size: 0.8rem;
-  color: var(--muted) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 800;
-  margin-bottom: 0.7rem;
-}
-
-.pa-list {
-  margin: 0;
-  padding-left: 1.15rem;
-}
-
-.pa-list li {
-  line-height: 1.6;
-  margin-bottom: 0.45rem;
-}
-
-.pa-section {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  margin: 1rem 0 0.8rem 0;
-}
-
-.pa-score-wrap {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1rem 1.05rem;
-}
-
-.pa-score-title {
-  font-size: 0.8rem;
-  color: var(--muted) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 800;
-  margin-bottom: 0.9rem;
-}
-
-.pa-score-row {
-  display: grid;
-  grid-template-columns: 150px 1fr 48px;
-  gap: 0.8rem;
-  align-items: center;
-  margin-bottom: 0.9rem;
-}
-
-.pa-score-label {
-  font-weight: 700;
-}
-
-.pa-score-track {
-  height: 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.pa-score-fill {
-  height: 100%;
-  border-radius: 999px;
-}
-
-.pa-score-num {
-  text-align: right;
-  font-weight: 800;
-}
-
-.pa-headline-note {
-  margin-top: 0.6rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid var(--border);
-}
-
-.pa-note-strong {
-  font-weight: 700;
-}
-
-.pa-signal-wrap {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1rem 1.05rem;
-}
-
-.pa-signal-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-  padding: 0.72rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.pa-signal-row:last-child {
-  border-bottom: none;
-}
-
-.pa-signal-name {
-  font-weight: 700;
-  margin-bottom: 0.18rem;
-}
-
-.pa-signal-desc {
-  color: var(--muted) !important;
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.pa-signal-val {
-  min-width: 50px;
-  text-align: right;
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.pa-signal-good { color: var(--green) !important; }
-.pa-signal-warn { color: var(--amber) !important; }
-.pa-signal-bad  { color: var(--red) !important; }
-
-.pa-claim {
-  background: linear-gradient(180deg, #0d141d 0%, #0b121a 100%);
   border: 1px solid var(--border);
   border-left: 4px solid transparent;
   border-radius: 18px;
@@ -343,16 +228,16 @@ div[data-testid="stMetric"] {
   margin-bottom: 0.85rem;
 }
 
-.pa-claim.high { border-left-color: var(--red); }
-.pa-claim.medium { border-left-color: var(--amber); }
-.pa-claim.low { border-left-color: var(--green); }
+.pa-claim-high { border-left-color: #ef6278; }
+.pa-claim-medium { border-left-color: #f4b247; }
+.pa-claim-low { border-left-color: #37c987; }
 
 .pa-claim-top {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
   align-items: center;
-  margin-bottom: 0.55rem;
+  gap: 1rem;
+  margin-bottom: 0.45rem;
 }
 
 .pa-claim-rank {
@@ -366,53 +251,48 @@ div[data-testid="stMetric"] {
 .pa-claim-text {
   font-size: 1rem;
   line-height: 1.55;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .pa-claim-sub {
   color: var(--muted) !important;
   line-height: 1.45;
+  font-size: 0.9rem;
 }
 
-.pa-badge {
+.pa-badge-high,
+.pa-badge-medium,
+.pa-badge-low {
   border-radius: 999px;
   padding: 0.34rem 0.58rem;
   font-size: 0.76rem;
   font-weight: 800;
-  white-space: nowrap;
 }
 
-.pa-badge.high {
-  color: var(--red) !important;
+.pa-badge-high {
+  color: #ef6278 !important;
   background: rgba(239,98,120,0.12);
   border: 1px solid rgba(239,98,120,0.28);
 }
 
-.pa-badge.medium {
-  color: var(--amber) !important;
+.pa-badge-medium {
+  color: #f4b247 !important;
   background: rgba(244,178,71,0.12);
   border: 1px solid rgba(244,178,71,0.28);
 }
 
-.pa-badge.low {
-  color: var(--green) !important;
+.pa-badge-low {
+  color: #37c987 !important;
   background: rgba(55,201,135,0.12);
   border: 1px solid rgba(55,201,135,0.28);
 }
 
-.pa-small {
+.pa-muted {
   color: var(--muted) !important;
-  font-size: 0.88rem;
-  line-height: 1.45;
 }
 
-.pa-divider {
-  margin-top: 0.2rem;
-  margin-bottom: 0.7rem;
-}
-
-.streamlit-expanderHeader {
-  font-weight: 700 !important;
+div[data-testid="stProgressBar"] > div > div {
+  border-radius: 999px !important;
 }
 </style>
 """
@@ -639,7 +519,7 @@ Transparency: <0-100> - <sentence>
 
 
 # =============================================================================
-# ARTICLE EXTRACTION
+# EXTRACTION
 # =============================================================================
 
 BAD_PHRASES = [
@@ -812,7 +692,7 @@ def extract_article_from_url(url: str) -> str:
 
 
 # =============================================================================
-# OPENAI
+# OPENAI HELPERS
 # =============================================================================
 
 def get_client(api_key: str) -> OpenAI:
@@ -956,6 +836,7 @@ def count_hedges(text: str) -> int:
 
 def extract_named_source_candidates(text: str) -> list[str]:
     candidates = []
+
     patterns = [
         r"(?:according to|said|stated|reported|announced|claimed|told)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})",
         r"(?:laut|sagte|erklärte|berichtete|zufolge)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+){0,2})",
@@ -973,6 +854,7 @@ def extract_named_source_candidates(text: str) -> list[str]:
 
             if not name:
                 continue
+
             first = name.split()[0]
             if first in STOPWORD_TITLES:
                 continue
@@ -980,6 +862,7 @@ def extract_named_source_candidates(text: str) -> list[str]:
                 continue
             if len(name.split()) == 1 and len(name) < 4:
                 continue
+
             candidates.append(name)
 
     cleaned = []
@@ -1175,7 +1058,7 @@ def headline_body_consistency(article_text: str) -> tuple[str, str]:
     if strong_count >= 1 and evidence_count < 2:
         return "Weak", "The opening framing appears stronger than the supporting evidence in the body."
     if strong_count >= 1 and evidence_count >= 2:
-        return "Moderate", "The framing is assertive, but the article body contains some supporting evidence signals."
+        return "Moderate", "The framing is assertive, but the body contains some evidence signals."
     return "Strong", "The opening framing looks proportionate to the article body."
 
 
@@ -1351,18 +1234,18 @@ def quality_label(avg: Optional[float]) -> str:
 
 def score_color(score: int) -> str:
     if score >= 75:
-        return "#37c987"
+        return "🟢"
     if score >= 55:
-        return "#f4b247"
-    return "#ef6278"
+        return "🟠"
+    return "🔴"
 
 
-def verdict_class(status: str) -> str:
+def verdict_class_name(status: str) -> str:
     if status == "Publish":
-        return "publish"
+        return "pa-status-publish"
     if status == "Revise":
-        return "revise"
-    return "review"
+        return "pa-status-revise"
+    return "pa-status-review"
 
 
 def verdict_title(status: str) -> str:
@@ -1442,6 +1325,14 @@ def build_all_claim_rows(claims: list[str], article_text: str, indicators: dict)
     return rows
 
 
+def signal_state(value: int, good_if_at_least: Optional[int] = None, bad_if_more_than: Optional[int] = None) -> str:
+    if good_if_at_least is not None and value >= good_if_at_least:
+        return "good"
+    if bad_if_more_than is not None and value > bad_if_more_than:
+        return "bad"
+    return "warn"
+
+
 # =============================================================================
 # ANALYSIS
 # =============================================================================
@@ -1486,7 +1377,7 @@ def run_full_analysis(client: OpenAI, article_text: str) -> dict:
 
 
 # =============================================================================
-# SESSION STATE
+# STATE
 # =============================================================================
 
 def ensure_state():
@@ -1511,17 +1402,15 @@ def get_api_key() -> Optional[str]:
 
 
 # =============================================================================
-# UI RENDER
+# RENDER HELPERS
 # =============================================================================
 
 def render_header():
     st.markdown(
         """
-        <div class="pa-shell">
-          <div class="pa-hero">
-            <div class="pa-title">PressAnalyzer</div>
-            <div class="pa-sub">Pre-publication editorial review</div>
-          </div>
+        <div class="pa-hero">
+          <div class="pa-title">PressAnalyzer</div>
+          <div class="pa-sub">Pre-publication editorial review</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1530,74 +1419,60 @@ def render_header():
 
 def render_status(verdict: dict, quality: str, avg_score: Optional[float], hint: str,
                   headline_label: str, claim_count: int):
-    st.markdown(
-        f"""
-        <div class="pa-status {verdict_class(verdict['status'])}">
-          <div class="pa-status-top">Publication recommendation</div>
-          <div class="pa-status-title">{verdict_title(verdict['status'])}</div>
-          <div class="pa-status-text">{hint}</div>
-          <div class="pa-chip-row">
-            <div class="pa-chip">Severity: {verdict['severity']}</div>
-            <div class="pa-chip">Confidence: {verdict['confidence']}</div>
-            <div class="pa-chip">Quality: {quality}</div>
-            <div class="pa-chip">Score: {avg_score if avg_score is not None else 'N/A'}</div>
-            <div class="pa-chip">Headline/body: {headline_label}</div>
-            <div class="pa-chip">Claims: {claim_count}</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    css_class = verdict_class_name(verdict["status"])
+    html = f"""
+    <div class="{css_class}">
+      <div class="pa-status-top">Publication recommendation</div>
+      <div class="pa-status-title">{verdict_title(verdict['status'])}</div>
+      <div class="pa-status-text">{hint}</div>
+      <div class="pa-chip-row">
+        <div class="pa-chip">Severity: {verdict['severity']}</div>
+        <div class="pa-chip">Confidence: {verdict['confidence']}</div>
+        <div class="pa-chip">Quality: {quality}</div>
+        <div class="pa-chip">Score: {avg_score if avg_score is not None else 'N/A'}</div>
+        <div class="pa-chip">Headline/body: {headline_label}</div>
+        <div class="pa-chip">Claims: {claim_count}</div>
+      </div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_issue_box(title: str, items: list[str]):
     if not items:
         items = ["No issues detected."]
-
     li_html = "".join(f"<li>{item}</li>" for item in items)
-
     st.markdown(
         f"""
         <div class="pa-card">
           <div class="pa-card-title">{title}</div>
-          <ul class="pa-list">{li_html}</ul>
+          <ul>{li_html}</ul>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_scores(final_scores: dict, headline_label: str, headline_reason: str):
-    rows_html = ""
-    for label in ["Balance", "Sourcing", "Tone Neutrality", "Transparency"]:
-        score = final_scores.get(label)
-        if score is None:
-            continue
+def render_scores_native(final_scores: dict, headline_label: str, headline_reason: str):
+    with st.container(border=True):
+        st.markdown("##### Quality scores")
 
-        color = score_color(score)
+        for label in ["Balance", "Sourcing", "Tone Neutrality", "Transparency"]:
+            score = final_scores.get(label)
+            if score is None:
+                continue
 
-        rows_html += f"""
-        <div class="pa-score-row">
-          <div class="pa-score-label">{label}</div>
-          <div class="pa-score-track">
-            <div class="pa-score-fill" style="width:{score}%; background:{color};"></div>
-          </div>
-          <div class="pa-score-num">{score}</div>
-        </div>
-        """
+            c1, c2, c3 = st.columns([1.5, 4, 0.8])
+            with c1:
+                st.markdown(f"**{label}**")
+            with c2:
+                st.progress(int(score))
+            with c3:
+                st.markdown(f"**{score}**")
 
-    html = f"""
-    <div class="pa-score-wrap">
-      <div class="pa-score-title">Quality scores</div>
-      {rows_html}
-      <div class="pa-headline-note">
-        <div class="pa-note-strong">Headline/body consistency: {headline_label}</div>
-        <div class="pa-small">{headline_reason}</div>
-      </div>
-    </div>
-    """
-
-    st.markdown(html, unsafe_allow_html=True)
+        st.divider()
+        st.markdown(f"**Headline/body consistency:** {headline_label}")
+        st.caption(headline_reason)
 
 
 def evidence_signal_rows(indicators: dict) -> list[dict]:
@@ -1605,77 +1480,60 @@ def evidence_signal_rows(indicators: dict) -> list[dict]:
         {
             "name": "Direct quotes",
             "value": indicators.get("quotes", 0),
-            "desc": "Quoted statements inside the article.",
-            "state": "good" if indicators.get("quotes", 0) >= 2 else "warn",
+            "desc": "Quoted statements inside the article",
+            "icon": "🟢" if indicators.get("quotes", 0) >= 2 else "🟠",
         },
         {
             "name": "Attribution signals",
             "value": indicators.get("attributions", 0),
-            "desc": 'Phrases like "according to", "said", or "reported".',
-            "state": "good" if indicators.get("attributions", 0) >= 2 else "bad",
+            "desc": 'Phrases like "according to", "said", or "reported"',
+            "icon": "🟢" if indicators.get("attributions", 0) >= 2 else "🔴",
         },
         {
             "name": "Numbers and figures",
             "value": indicators.get("numbers", 0),
-            "desc": "Visible statistics, counts, percentages, or amounts.",
-            "state": "good" if indicators.get("numbers", 0) >= 1 else "warn",
+            "desc": "Visible statistics, counts, percentages, or amounts",
+            "icon": "🟢" if indicators.get("numbers", 0) >= 1 else "🟠",
         },
         {
             "name": "Loaded words",
             "value": indicators.get("loaded_words", 0),
-            "desc": "Emotionally charged or sensational wording.",
-            "state": "good" if indicators.get("loaded_words", 0) == 0 else ("warn" if indicators.get("loaded_words", 0) < 3 else "bad"),
+            "desc": "Emotionally charged or sensational wording",
+            "icon": "🟢" if indicators.get("loaded_words", 0) == 0 else ("🟠" if indicators.get("loaded_words", 0) < 3 else "🔴"),
         },
         {
             "name": "Uncertainty markers",
             "value": indicators.get("hedges", 0),
-            "desc": 'Qualifiers like "may", "could", or "appears".',
-            "state": "good" if indicators.get("hedges", 0) >= 1 else "warn",
+            "desc": 'Qualifiers like "may", "could", or "appears"',
+            "icon": "🟢" if indicators.get("hedges", 0) >= 1 else "🟠",
         },
         {
             "name": "Named sources",
             "value": indicators.get("named_sources", 0),
-            "desc": "Distinct named people clearly used as sources.",
-            "state": "good" if indicators.get("named_sources", 0) >= 2 else "bad",
+            "desc": "Distinct named people clearly used as sources",
+            "icon": "🟢" if indicators.get("named_sources", 0) >= 2 else "🔴",
         },
         {
             "name": "Stakeholder coverage",
             "value": indicators.get("stakeholder_hints", 0),
-            "desc": "Signals that different sides or affected groups are mentioned.",
-            "state": "good" if indicators.get("stakeholder_hints", 0) >= 2 else "warn",
+            "desc": "Signals that different sides or affected groups are mentioned",
+            "icon": "🟢" if indicators.get("stakeholder_hints", 0) >= 2 else "🟠",
         },
     ]
 
 
-def render_signals(indicators: dict):
-    rows = evidence_signal_rows(indicators)
-    rows_html = ""
+def render_signals_native(indicators: dict):
+    with st.container(border=True):
+        st.markdown("##### Evidence signals")
+        rows = evidence_signal_rows(indicators)
 
-    for row in rows:
-        state_class = {
-            "good": "pa-signal-good",
-            "warn": "pa-signal-warn",
-            "bad": "pa-signal-bad",
-        }[row["state"]]
-
-        rows_html += f"""
-        <div class="pa-signal-row">
-          <div>
-            <div class="pa-signal-name">{row['name']}</div>
-            <div class="pa-signal-desc">{row['desc']}</div>
-          </div>
-          <div class="pa-signal-val {state_class}">{row['value']}</div>
-        </div>
-        """
-
-    html = f"""
-    <div class="pa-signal-wrap">
-      <div class="pa-card-title">Evidence signals</div>
-      {rows_html}
-    </div>
-    """
-
-    st.markdown(html, unsafe_allow_html=True)
+        for row in rows:
+            c1, c2 = st.columns([5, 1])
+            with c1:
+                st.markdown(f"**{row['name']}**")
+                st.caption(row["desc"])
+            with c2:
+                st.markdown(f"### {row['icon']} {row['value']}")
 
 
 def render_ranked_claims(ranked_claims: list[dict]):
@@ -1684,12 +1542,24 @@ def render_ranked_claims(ranked_claims: list[dict]):
         return
 
     for row in ranked_claims:
+        badge_class = {
+            "high": "pa-badge-high",
+            "medium": "pa-badge-medium",
+            "low": "pa-badge-low",
+        }[row["css"]]
+
+        box_class = {
+            "high": "pa-claim-box pa-claim-high",
+            "medium": "pa-claim-box pa-claim-medium",
+            "low": "pa-claim-box pa-claim-low",
+        }[row["css"]]
+
         st.markdown(
             f"""
-            <div class="pa-claim {row['css']}">
+            <div class="{box_class}">
               <div class="pa-claim-top">
                 <div class="pa-claim-rank">Risk #{row['rank']} · {row['type']}</div>
-                <div class="pa-badge {row['css']}">{row['label']} · {row['score']}/100</div>
+                <div class="{badge_class}">{row['label']} · {row['score']}/100</div>
               </div>
               <div class="pa-claim-text">{safe_preview(row['claim'])}</div>
               <div class="pa-claim-sub">{compact_reason(row['type'], row['score'])}</div>
@@ -1700,7 +1570,7 @@ def render_ranked_claims(ranked_claims: list[dict]):
 
 
 # =============================================================================
-# APP START
+# APP
 # =============================================================================
 
 ensure_state()
@@ -1731,7 +1601,6 @@ with st.sidebar:
     )
 
     st.divider()
-
     st.markdown("### Demo")
     if st.button("Load demo article", use_container_width=True):
         st.session_state["article_text"] = DEMO_ARTICLE
@@ -1858,12 +1727,11 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
         render_issue_box("Secondary improvements", verdict["non_blocking_issues"])
 
     st.markdown('<div class="pa-section">Core scores</div>', unsafe_allow_html=True)
-
-    s1, s2 = st.columns([1, 1], gap="large")
+    s1, s2 = st.columns(2, gap="large")
     with s1:
-        render_scores(final_scores, headline_label, headline_reason)
+        render_scores_native(final_scores, headline_label, headline_reason)
     with s2:
-        render_signals(indicators)
+        render_signals_native(indicators)
 
     st.markdown('<div class="pa-section">Highest-risk claims</div>', unsafe_allow_html=True)
     render_ranked_claims(ranked_claims)
@@ -1886,7 +1754,6 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
 
     with claim_tab:
         st.subheader("All extracted claims")
-
         for row in all_claim_rows:
             with st.expander(f"Claim {row['index']} · {row['type']} · {row['score']}/100"):
                 st.markdown(f"**Claim:** {row['claim']}")
