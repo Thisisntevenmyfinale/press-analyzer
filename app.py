@@ -72,30 +72,31 @@ st.markdown(
     """
     <style>
         :root {
-            --bg: #0a0a0a;
+            --bg: #090909;
             --panel: #111111;
             --panel-2: #151515;
-            --ink: #f4f1ea;
-            --muted: #b6b1a8;
-            --line: rgba(255,255,255,0.14);
+            --ink: #f5f2eb;
+            --muted: #b9b1a6;
+            --line: rgba(255,255,255,0.12);
             --red: #d72638;
-            --green: #17b26a;
+            --green: #18b26a;
             --amber: #f59e0b;
+            --blue: #0d1b3d;
         }
 
         .stApp {
-            background: linear-gradient(180deg, #090909 0%, #0d0d0d 100%);
+            background: linear-gradient(180deg, #080808 0%, #0c0c0c 100%);
             color: var(--ink);
         }
 
         .main .block-container {
-            max-width: 1320px;
-            padding-top: 1.3rem;
+            max-width: 1240px;
+            padding-top: 1.2rem;
             padding-bottom: 3rem;
         }
 
         [data-testid="stSidebar"] {
-            background: #0c0c0c;
+            background: #0b0b0b;
             border-right: 1px solid var(--line);
         }
 
@@ -103,96 +104,100 @@ st.markdown(
             color: var(--ink);
         }
 
-        .pa-shell {
+        .hero-wrap {
             border: 1px solid var(--line);
-            background: linear-gradient(180deg, #111111 0%, #0d0d0d 100%);
-        }
-
-        .hero {
-            padding: 24px 24px 20px 24px;
+            background: linear-gradient(180deg, #101010 0%, #0c0c0c 100%);
+            padding: 28px 28px 24px 28px;
             margin-bottom: 18px;
         }
 
         .eyebrow {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             text-transform: uppercase;
-            letter-spacing: 0.14em;
-            color: #f1d2d6;
-            margin-bottom: 8px;
-            font-weight: 800;
+            letter-spacing: 0.16em;
+            color: #f0cfd4;
+            font-weight: 900;
+            margin-bottom: 10px;
         }
 
         .hero-title {
             font-size: 4rem;
-            font-weight: 900;
             line-height: 0.95;
-            margin-bottom: 12px;
+            font-weight: 900;
             color: #ffffff;
+            margin-bottom: 14px;
         }
 
         .hero-sub {
-            max-width: 920px;
+            max-width: 860px;
             font-size: 1.08rem;
-            line-height: 1.6;
+            line-height: 1.65;
             color: var(--muted);
+            margin-bottom: 18px;
         }
 
-        .hero-pills {
+        .hero-strip {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 18px;
         }
 
-        .hero-pill {
+        .hero-chip {
             border: 1px solid var(--line);
             background: #141414;
             padding: 8px 12px;
-            font-size: 0.82rem;
-            font-weight: 800;
+            font-size: 0.8rem;
+            font-weight: 900;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #f2eeea;
+            color: #f6f1ea;
         }
 
         .section-label {
             margin-top: 8px;
             margin-bottom: 10px;
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             text-transform: uppercase;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.16em;
             font-weight: 900;
-            color: #f1d2d6;
+            color: #f0cfd4;
         }
 
-        .news-card {
+        .clean-card {
             border: 1px solid var(--line);
             background: var(--panel);
-            padding: 18px 18px 16px 18px;
-            margin-bottom: 16px;
+            padding: 18px;
+            height: 100%;
+            box-sizing: border-box;
         }
 
-        .news-card-tight {
+        .small-card {
             border: 1px solid var(--line);
             background: var(--panel);
-            padding: 14px 14px 12px 14px;
+            padding: 14px;
             margin-bottom: 12px;
         }
 
-        .stat-value {
-            font-size: 2rem;
+        .card-title {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
             font-weight: 900;
-            line-height: 1;
-            margin-top: 6px;
-            color: #ffffff;
+            color: #f0cfd4;
+            margin-bottom: 10px;
         }
 
-        .stat-label {
-            font-size: 0.78rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #c7bfb4;
-            font-weight: 800;
+        .card-copy {
+            line-height: 1.75;
+            color: #ddd7ce;
+            font-size: 0.98rem;
+        }
+
+        .input-shell {
+            border: 1px solid var(--line);
+            background: #0f0f0f;
+            padding: 18px;
+            margin-top: 8px;
         }
 
         .verdict-frontpage {
@@ -260,12 +265,13 @@ st.markdown(
             background: #121212;
             padding: 16px;
             height: 100%;
+            box-sizing: border-box;
         }
 
         .focus-title {
-            font-size: 0.86rem;
+            font-size: 0.84rem;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.14em;
             font-weight: 900;
             color: #ffffff;
             margin-bottom: 12px;
@@ -282,6 +288,36 @@ st.markdown(
             line-height: 1.45;
         }
 
+        .stat-card {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            padding: 18px;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 0.76rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #c7bfb4;
+            font-weight: 900;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.0;
+            margin-top: 8px;
+        }
+
+        .tiny-note {
+            color: #b6b1a8;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
         .heatmap-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -291,10 +327,11 @@ st.markdown(
         .claim-tile {
             border: 1px solid var(--line);
             padding: 14px;
-            min-height: 180px;
+            min-height: 185px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-sizing: border-box;
         }
 
         .claim-top {
@@ -306,9 +343,9 @@ st.markdown(
         }
 
         .claim-num {
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.14em;
             font-weight: 900;
             color: #c7bfb4;
         }
@@ -320,7 +357,7 @@ st.markdown(
             font-weight: 900;
             color: #ffffff;
             padding: 4px 8px;
-            border: 1px solid rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.18);
         }
 
         .claim-text {
@@ -333,7 +370,7 @@ st.markdown(
             margin-top: 12px;
             font-size: 0.82rem;
             color: #d2cbc1;
-            line-height: 1.4;
+            line-height: 1.45;
         }
 
         .ticker {
@@ -350,15 +387,10 @@ st.markdown(
             margin-bottom: 6px;
         }
 
-        .newspaper-rule {
+        .rule {
             height: 1px;
             background: var(--line);
             margin: 18px 0;
-        }
-
-        .tiny-note {
-            color: #b6b1a8;
-            font-size: 0.9rem;
         }
 
         @media (max-width: 1100px) {
@@ -366,7 +398,7 @@ st.markdown(
                 font-size: 3rem;
             }
             .verdict-headline {
-                font-size: 2.4rem;
+                font-size: 2.35rem;
             }
             .heatmap-grid {
                 grid-template-columns: 1fr;
@@ -385,7 +417,7 @@ def render_section_label(text: str):
 def render_stat_card(label: str, value: str, note: str = ""):
     st.markdown(
         f"""
-        <div class="news-card">
+        <div class="stat-card">
             <div class="stat-label">{label}</div>
             <div class="stat-value">{value}</div>
             <div class="tiny-note">{note}</div>
@@ -405,15 +437,15 @@ def bullet_lines(items: list[str], fallback: str):
 
 def score_color(score: int) -> str:
     if score >= 75:
-        return "#1a1a1a"
+        return "#171717"
     if score >= 55:
-        return "#271a00"
+        return "#241900"
     return "#2a0d12"
 
 
 def score_border(score: int) -> str:
     if score >= 75:
-        return "#17b26a"
+        return "#18b26a"
     if score >= 55:
         return "#f59e0b"
     return "#d72638"
@@ -495,9 +527,7 @@ def reader_takeaway(verdict: dict, final_scores: dict, indicators: dict) -> str:
                 "The likely takeaway is directionally clear, but readers may not easily distinguish reported facts from "
                 "narrative interpretation."
             )
-        return (
-            "The article is broadly understandable, but some framing may feel stronger than the evidence presentation."
-        )
+        return "The article is broadly understandable, but some framing may feel stronger than the evidence presentation."
 
     if indicators.get("attributions", 0) < 2:
         return "The story may be publishable, but clearer attribution would still improve audience trust."
@@ -557,55 +587,24 @@ def run_full_analysis(client, article_text: str):
 
 st.markdown(
     """
-    <div class="pa-shell hero">
+    <div class="hero-wrap">
         <div class="eyebrow">Editorial Decision Support Prototype</div>
         <div class="hero-title">PressAnalyzer</div>
         <div class="hero-sub">
             A pre-publication review system that helps editors decide whether a story should be published,
             revised, or escalated. Built around decision clarity, claim risk triage, and explainable newsroom logic.
         </div>
-        <div class="hero-pills">
-            <div class="hero-pill">Decision first</div>
-            <div class="hero-pill">Claim risk map</div>
-            <div class="hero-pill">Missing voices</div>
-            <div class="hero-pill">Editorial panel</div>
-            <div class="hero-pill">Revision guidance</div>
+        <div class="hero-strip">
+            <div class="hero-chip">Decision first</div>
+            <div class="hero-chip">Claim risk map</div>
+            <div class="hero-chip">Missing voices</div>
+            <div class="hero-chip">Editorial panel</div>
+            <div class="hero-chip">Revision guidance</div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-top_left, top_right = st.columns([1.8, 1.2])
-
-with top_left:
-    st.markdown(
-        """
-This prototype is built for **editorial desks, newsroom standards teams, and publication-quality review**.
-
-It does not just ask whether a text seems biased.
-
-### It asks the more useful editorial question:
-**Should this article be published, revised, or escalated — and what exactly should happen next?**
-"""
-    )
-
-with top_right:
-    st.markdown(
-        """
-        <div class="news-card">
-            <div class="section-label" style="margin-top:0;">How to use it</div>
-            <div style="line-height:1.8;">
-                1. Paste article text or a public news URL<br>
-                2. Run the audit<br>
-                3. Read the frontpage verdict first<br>
-                4. Review only the top risks<br>
-                5. Open deep analysis if needed
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 with st.sidebar:
     st.header("Setup")
@@ -638,17 +637,30 @@ with st.sidebar:
         st.session_state["analysis_running"] = False
         st.session_state["analysis"] = None
 
-render_section_label("Input")
 
-in_left, in_right = st.columns([2.2, 1])
+render_section_label("Start")
 
-with in_left:
+start_left, start_right = st.columns([2.2, 1], gap="large")
+
+with start_left:
+    st.markdown(
+        """
+This prototype is built for **editorial desks, newsroom standards teams, and publication-quality review**.
+
+### It asks the core editorial question:
+**Should this article be published, revised, or escalated — and what exactly should happen next?**
+"""
+    )
+
+    st.markdown('<div class="input-shell">', unsafe_allow_html=True)
+    render_section_label("Input")
+
     if input_mode == "Paste article text":
         article_text = st.text_area(
             "Paste article text",
             value=st.session_state.get("article_text", ""),
-            height=330,
-            placeholder="Paste a full article draft or a copied news story here...",
+            height=320,
+            placeholder="Paste a full article draft or copied news text here...",
         )
         st.session_state["article_text"] = article_text
     else:
@@ -670,14 +682,32 @@ with in_left:
             except Exception as e:
                 st.error(f"Could not extract article: {e}")
 
-with in_right:
+    run_analysis = st.button("Run Editorial Audit", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with start_right:
     st.markdown(
         """
-        <div class="news-card">
-            <div class="section-label" style="margin-top:0;">Input guidance</div>
-            <div style="line-height:1.75;">
-                Use a public article URL or paste the full article text directly.
-                Public links usually work best. Paywalled or dynamic pages may extract only partially.
+        <div class="clean-card">
+            <div class="card-title">How to use it</div>
+            <div class="card-copy">
+                1. Insert article text or a public article URL<br><br>
+                2. Run the audit<br><br>
+                3. Read the frontpage verdict first<br><br>
+                4. Review the top risks<br><br>
+                5. Open deep analysis only if needed
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="small-card">
+            <div class="card-title">Input guidance</div>
+            <div class="card-copy">
+                Public links usually work best. Paywalled or highly dynamic pages may only extract partially.
             </div>
         </div>
         """,
@@ -687,16 +717,17 @@ with in_right:
     if st.session_state.get("use_demo"):
         st.markdown(
             """
-            <div class="news-card-tight">
-                <div class="section-label" style="margin-top:0;">Demo mode</div>
-                <div class="tiny-note">A built-in sample article is loaded and ready for analysis.</div>
+            <div class="small-card">
+                <div class="card-title">Demo mode</div>
+                <div class="card-copy">
+                    A built-in sample article is currently loaded and ready for analysis.
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
 article_text = st.session_state.get("article_text", "")
-run_analysis = st.button("Run Editorial Audit", use_container_width=True)
 
 if run_analysis:
     if not api_key:
@@ -806,7 +837,7 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
         unsafe_allow_html=True,
     )
 
-    focus1, focus2, focus3 = st.columns(3)
+    focus1, focus2, focus3 = st.columns(3, gap="large")
 
     with focus1:
         st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
@@ -828,7 +859,7 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
 
     render_section_label("Decision summary")
 
-    stat1, stat2, stat3, stat4 = st.columns(4)
+    stat1, stat2, stat3, stat4 = st.columns(4, gap="large")
     with stat1:
         render_stat_card("Average score", f"{avg_score if avg_score is not None else 'N/A'}", "Merged LLM + indicator score.")
     with stat2:
@@ -838,7 +869,7 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
     with stat4:
         render_stat_card("Escalation basis", verdict["status"], "Hybrid verdict from risk logic.")
 
-    left_col, right_col = st.columns([1.25, 1])
+    left_col, right_col = st.columns([1.25, 1], gap="large")
 
     with left_col:
         st.markdown("### Top risk claims")
@@ -874,7 +905,7 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
         st.markdown("### Evidence & structure")
         st.markdown('<div class="focus-panel">', unsafe_allow_html=True)
         bullet_lines(evidence_notes, "No notable evidence issue was detected.")
-        st.markdown('<div class="newspaper-rule"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="rule"></div>', unsafe_allow_html=True)
         st.markdown("**Headline/body consistency**")
         st.markdown(f"{headline_label} — {headline_reason}")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -886,7 +917,7 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
             if score is None:
                 st.write(f"**{label}:** N/A")
             else:
-                color = "#17b26a" if score >= 80 else "#f59e0b" if score >= 60 else "#d72638"
+                color = "#18b26a" if score >= 80 else "#f59e0b" if score >= 60 else "#d72638"
                 st.markdown(
                     f"""
                     <div style="margin-bottom: 14px;">
@@ -1056,25 +1087,3 @@ if st.session_state.get("analysis_complete") and st.session_state.get("analysis"
 
 elif st.session_state.get("analysis_running"):
     st.info("Editorial analysis is running...")
-
-else:
-    render_section_label("Prototype logic")
-
-    p1, p2, p3 = st.columns(3)
-    with p1:
-        render_stat_card("1", "Decision first", "Frontpage verdict before any deep analysis.")
-    with p2:
-        render_stat_card("2", "Risk triage", "Only the top claims and blockers are surfaced immediately.")
-    with p3:
-        render_stat_card("3", "Deep review", "Claim analysis and panel outputs remain available on demand.")
-
-    st.markdown("### What makes this prototype stronger")
-    st.markdown(
-        """
-- It feels like an **editorial desk tool**, not a generic dashboard  
-- It prioritizes **publish / revise / escalate** before everything else  
-- It turns claim review into a **visual risk map** instead of a text wall  
-- It gives a fast **quick-fix plan** instead of only diagnostics  
-- It keeps deep analysis available without overwhelming the default view  
-"""
-    )
